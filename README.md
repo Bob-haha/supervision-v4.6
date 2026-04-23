@@ -1,5 +1,175 @@
-# Vue 3 + TypeScript + Vite
+# 督办管理系统 V2.0
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## 项目简介
 
-Learn more about the recommended Project Setup and IDE Support in the [Vue Docs TypeScript Guide](https://vuejs.org/guide/typescript/overview.html#project-setup).
+督办管理系统 V2.0 是一个基于 Vue 3 + TypeScript + Vite 构建的现代化 Web 应用，专为海关等政府机构设计的任务督办管理平台。系统采用客户端数据库和 P2P 实时同步技术，实现了高效、安全、实时的任务管理和协作功能。
+
+## 核心功能
+
+### 1. 任务管理
+- **任务分类管理**：支持查看全部督办事项、科室主办事项、科室协办事项和科室办结事项
+- **任务详情**：包含任务标题、内容、类型、优先级、主办/协办科室、截止日期、状态、进度等详细信息
+- **进展反馈**：支持各科室对任务进展进行反馈和留痕
+- **领导批示**：记录领导对任务的批示和指示
+- **任务下发**：支持将任务向下级科室下发，形成任务层级结构
+
+### 2. 数据可视化
+- **督办总览看板**：通过 ECharts 实现任务数据的可视化展示，便于管理层快速了解整体情况
+
+### 3. 历史档案管理
+- **办结归档事项**：查看已完成并归档的任务历史记录
+
+### 4. 实时同步功能
+- **P2P 数据同步**：基于 WebRTC 技术实现多用户间的实时数据同步
+- **增量同步**：只同步变更数据，提高同步效率
+- **全量同步**：支持新用户加入时自动请求全量数据
+
+### 5. 本地数据存储
+- **客户端数据库**：使用 SQL.js (SQLite) 作为本地数据库
+- **数据持久化**：通过 IndexedDB 将数据库持久化存储在浏览器中
+
+## 技术栈
+
+### 前端技术栈
+- **框架**：Vue 3 + TypeScript + Vite
+- **UI 组件**：Element Plus
+- **状态管理**：Pinia
+- **数据可视化**：ECharts
+- **通信**：Socket.io + WebRTC
+- **数据库**：SQL.js (SQLite)
+
+### 信令服务器
+- **技术**：Node.js + Socket.io
+- **功能**：WebRTC 连接的信令交换
+
+## 安装与部署
+
+### 前置条件
+- Node.js 16.0 或更高版本
+- npm 7.0 或更高版本
+
+### 安装步骤
+
+1. **克隆项目**
+   ```bash
+   git clone <项目仓库地址>
+   cd supervision-v4.6
+   ```
+
+2. **安装前端依赖**
+   ```bash
+   npm install
+   ```
+
+3. **安装信令服务器依赖**
+   ```bash
+   cd signaling-server
+   npm install
+   cd ..
+   ```
+
+### 开发环境运行
+
+1. **启动前端开发服务器**
+   ```bash
+   npm run dev
+   ```
+   前端服务器默认运行在 `http://localhost:5173`
+
+2. **启动信令服务器**
+   ```bash
+   cd signaling-server
+   node server.js
+   ```
+   信令服务器默认运行在 `http://localhost:3030`
+
+### 生产环境部署
+
+1. **构建前端**
+   ```bash
+   npm run build
+   ```
+   构建文件会生成在 `dist` 目录
+
+2. **部署信令服务器**
+   - 将 `signaling-server` 目录部署到 Node.js 服务器
+   - 配置环境变量和端口
+
+3. **部署前端**
+   - 将 `dist` 目录部署到静态文件服务器
+   - 确保静态文件服务器支持 SPA 路由（将所有请求重定向到 index.html）
+
+## 开发指南
+
+### 项目结构
+
+```
+supervision-v4.6/
+├── src/             # 源代码目录
+│   ├── components/  # 组件
+│   ├── core/        # 核心功能模块
+│   │   ├── database/ # 数据库管理
+│   │   └── sync/     # 同步功能
+│   ├── views/       # 页面视图
+│   ├── stores/      # 状态管理
+│   ├── router/      # 路由
+│   └── main.ts      # 入口文件
+├── signaling-server/ # 信令服务器
+├── package.json     # 项目配置
+└── vite.config.ts   # Vite 配置
+```
+
+### 核心模块
+
+1. **DatabaseManager**：负责数据库的初始化、查询、执行和持久化
+2. **P2PManager**：处理 WebRTC 连接、信令交换和数据同步
+3. **Store 模块**：使用 Pinia 管理应用状态，包括认证、任务和同步状态
+
+### 数据库结构
+
+- **tasks 表**：存储任务基本信息
+- **feedbacks 表**：存储任务进展反馈
+- **leader_comments 表**：存储领导批示记录
+
+### 开发流程
+
+1. **修改代码**：在 Trae IDE 中编辑相应文件
+2. **查看效果**：前端开发服务器默认运行在 `http://localhost:5173`
+3. **调试技巧**：使用 Trae 的内置调试器，在代码中添加断点，查看控制台输出
+
+## 常见问题
+
+### 依赖安装问题
+- **问题**：依赖安装失败
+- **解决方案**：
+  ```bash
+  # 清除缓存后重新安装
+  npm cache clean --force
+  npm install
+  ```
+
+### 信令服务器连接问题
+- **问题**：无法连接到信令服务器
+- **解决方案**：
+  - 确保信令服务器正在运行
+  - 检查防火墙设置
+  - 确认端口 3030 未被占用
+
+### P2P 同步问题
+- **问题**：P2P 同步失败
+- **解决方案**：
+  - 确保所有用户都连接到同一个信令服务器
+  - 检查网络环境，确保 WebRTC 可以正常工作
+  - 尝试手动触发全量同步
+
+## 许可证
+
+本项目采用 MIT 许可证。详见 [LICENSE](LICENSE) 文件。
+
+## 联系方式
+
+如有问题或建议，请联系项目维护人员。
+
+---
+
+**系统口号**：守国门 促发展 当好让党放心 让人民满意的国门卫士
