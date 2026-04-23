@@ -1,0 +1,136 @@
+/* ============================================================
+   HB2020 督办模块核心样式 (大字号 & 响应式版)
+   ============================================================ */
+
+/* 1. 顶部区域 */
+.desktop-container {
+    padding: 20px;
+    max-width: 100%;
+}
+
+.desk-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #0d2a61;
+    margin-bottom: 20px;
+}
+
+.desk-title {
+    font-weight: bold;
+    color: #0d2a61;
+    border-left: 6px solid #0d2a61;
+    padding-left: 15px;
+    font-size: 22px; /* 标题加大 */
+}
+
+/* 2. 搜索过滤卡片 */
+.filter-card {
+    margin-bottom: 20px;
+    background-color: #f8faff;
+    border: 1px solid #eef2f8;
+}
+
+/* 3. 任务列表容器 */
+.task-list-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+/* 4. 列表项通用样式 */
+.doc-item {
+    display: flex;
+    align-items: center;
+    padding: 20px 25px; /* 增加内边距，显得更大气 */
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.doc-item:not(.list-header):hover {
+    background-color: #f5f8ff;
+}
+
+.list-header {
+    background-color: #f8f9fa;
+    font-weight: bold;
+    color: #333;
+    font-size: 16px;
+    cursor: default;
+    border-bottom: 2px solid #e4e7ed;
+}
+
+/* 5. 严格列宽对齐控制 (核心响应式逻辑) */
+.doc-tag {
+    width: 60px;
+    text-align: center;
+    border: 1px solid #409EFF;
+    color: #409EFF;
+    font-size: 14px;
+    padding: 2px 0;
+    margin-right: 30px;
+    flex-shrink: 0;
+}
+.doc-tag-head { width: 92px; } /* 包含margin的对齐补偿 */
+
+.tag-level-1 { border-color: #f56c6c; color: #f56c6c; }
+.tag-level-2 { border-color: #e6a23c; color: #e6a23c; }
+
+.doc-sender, .doc-sender-head {
+    width: 220px;
+    color: #666;
+    font-size: 16px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.doc-title, .doc-title-head {
+    flex: 1; /* 标题自适应宽度 */
+    color: #2c3e50;
+    font-size: 18px; /* 标题字号加大 */
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 40px;
+}
+
+.doc-status, .doc-status-head {
+    width: 110px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.doc-time, .doc-time-head {
+    width: 180px;
+    color: #909399;
+    font-size: 15px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.doc-actions, .doc-actions-head {
+    width: 200px;
+    text-align: right;
+    flex-shrink: 0;
+    margin-left: 20px;
+}
+
+/* 6. 状态配色 */
+.PENDING { color: #409eff; }
+.COMPLETED { color: #67c23a; }
+.OVERDUE { color: #f56c6c; text-decoration: underline; }
+
+/* 7. 响应式补丁 (窄屏幕适配) */
+@media screen and (max-width: 1400px) {
+    .doc-sender, .doc-sender-head { width: 160px; }
+    .doc-time, .doc-time-head { display: none; } /* 极窄屏隐藏时间 */
+    .doc-actions, .doc-actions-head { width: 160px; }
+}

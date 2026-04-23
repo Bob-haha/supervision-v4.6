@@ -1,0 +1,37 @@
+:root {
+  --hb-blue: #0d2a61;       /* 顶部深蓝 */
+  --hb-sidebar: #2c3e50;    /* 侧边栏背景 */
+  --hb-bg: #f0f2f5;         /* 全局背景浅灰 */
+  --hb-text-main: #333333;
+  --hb-border: #dcdfe6;
+}
+
+body {
+  background-color: var(--hb-bg);
+  margin: 0;
+  padding: 0;
+  font-family: "Microsoft YaHei", sans-serif;
+}
+
+/* 仿照照片中的公文列表样式 */
+.doc-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 15px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s;
+}
+
+.doc-item:hover {
+  background: #f5f7fa;
+}
+
+.doc-tag {
+  border: 1px solid #409EFF;
+  color: #409EFF;
+  padding: 0 4px;
+  font-size: 12px;
+  margin-right: 10px;
+  border-radius: 2px;
+}
