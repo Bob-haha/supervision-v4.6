@@ -67,39 +67,64 @@ import { useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTaskStore } from '@/stores/task';
 import { DatabaseManager } from '@/core/database/DatabaseManager';
-import { P2PManager } from '@/core/sync/P2PManager';
+import { P2PSyncManager } from '@/core/sync/P2PSyncManager';
+import { eventBus } from '@/utils/eventBus';
 import RoleSelect from '@/views/Auth/RoleSelect.vue';
 import { DEPT_MAP } from '@/constants';
-import { 
+import {
   Loading, Platform, SwitchButton, Monitor, DataBoard,
-  EditPen, Finished, UserFilled 
+  EditPen, Finished, UserFilled
 } from '@element-plus/icons-vue';
 
 const authStore = useAuthStore();
 const taskStore = useTaskStore();
 const route = useRoute();
 const isDbReady = ref(false);
-let p2p: P2PManager | null = null;
+let p2pSync: P2PSyncManager | null = null;
 
 const getDeptName = (id: string) => DEPT_MAP[id] || '';
 
+/** 解析 SQL 获取操作元数据 */
+function parseSQLOperation(sql: string, params: any[]): { table: string; recordId: string; operation: 'INSERT' | 'UPDATE' | 'DELETE'; oldData?: any; newData?: any } | null {
+  const upper = sql.trim().toUpperCase();
+  // 从 SQL 中提取表名
+  const tableMatch = sql.match(/(?:INTO|FROM|UPDATE)\s+(\w+)/i);
+  if (!tableMatch) return null;
+  const table = tableMatch[1].toLowerCase();
+
+  // 第一个参数通常是 id
+  const recordId = params[0] || '';
+
+  if (upper.startsWith('INSERT')) {
+    return { table, recordId, operation: 'INSERT', newData: {} };
+  } else if (upper.startsWith('UPDATE')) {
+    return { table, recordId, operation: 'UPDATE' };
+  } else if (upper.startsWith('DELETE')) {
+    return { table, recordId, operation: 'DELETE' };
+  }
+  return null;
+}
+
 onMounted(async () => {
   try {
-    // 1. 初始化数据库
     const dbManager = DatabaseManager.getInstance();
     await dbManager.init();
-    p2p = new P2PManager();
-    (window as any).p2pInstance = p2p;
-    // 2. 初始化 P2P 同步
-   
-    
-    // 3. 核心绑定：SQL 执行时自动广播给 P2P
+
+    // 初始化新的 P2P 同步系统
+    p2pSync = P2PSyncManager.getInstance();
+    (window as any).p2pSyncInstance = p2pSync;
+    await p2pSync.initialize();
+
+    // SQL 执行 → 记录同步操作
     dbManager.setOnExecute((sql, params) => {
-      p2p?.broadcastSQL(sql, params);
+      const parsed = parseSQLOperation(sql, params);
+      if (parsed) {
+        p2pSync?.recordChange(parsed.table, parsed.recordId, parsed.operation, parsed.oldData, parsed.newData);
+      }
     });
 
-    // 4. 核心绑定：P2P 收到新数据时自动刷新 Store
-    p2p.setOnDataSync(() => {
+    // 监听同步事件刷新 UI
+    eventBus.on('store-update:tasks', () => {
       taskStore.fetchTasks();
     });
 
@@ -110,9 +135,8 @@ onMounted(async () => {
   }
 });
 
-// 页面关闭前销毁 P2P 连接，防止内存泄露
 onUnmounted(() => {
-  p2p?.destroyAll();
+  p2pSync?.disconnect();
 });
 </script>
 
