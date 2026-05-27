@@ -152,13 +152,25 @@ export class P2PSyncManager {
     console.log('✅ 所有业务Model实例已注册到同步框架');
   }
 
+  private getSignalingUrl(): string {
+    try {
+      const saved = localStorage.getItem('signaling-config');
+      if (saved) {
+        const config = JSON.parse(saved);
+        return `http://${config.host || window.location.hostname}:${config.port || 3030}`;
+      }
+    } catch { /* ignore */ }
+    const hostname = window.location.hostname || 'localhost';
+    return `http://${hostname}:3030`;
+  }
+
   private connectToSignalingServer(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.socket?.connected) {
         return resolve();
       }
 
-      const signalingUrl = `http://${window.location.hostname}:3030`;
+      const signalingUrl = this.getSignalingUrl();
       console.log(`🔗 连接信令服务器: ${signalingUrl}`);
 
       this.socket = io(signalingUrl, {

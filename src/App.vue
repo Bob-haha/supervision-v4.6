@@ -158,9 +158,7 @@ import RoleSelect from '@/views/Auth/RoleSelect.vue';
 import {
   Loading, Platform, Search, Message, Bell, Notification,
   UserFilled, ArrowDown, User, Setting, SwitchButton,
-  DataBoard, Monitor, Clock, Connection, Star, CircleCheck,
-  SetUp, AlarmClock, Finished, PieChart, TrendCharts,
-  OfficeBuilding, Lock, CircleCheckFilled
+  CircleCheckFilled
 } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 
@@ -232,6 +230,7 @@ const menuGroups = computed(() => {
         { path: '/admin/personnel', label: '人员管理', icon: 'User' },
         { path: '/admin/departments', label: '部门管理', icon: 'OfficeBuilding' },
         { path: '/admin/roles', label: '角色权限', icon: 'Lock' },
+        { path: '/admin/signaling', label: '信令服务器', icon: 'Connection' },
         { path: '/admin/settings', label: '系统设置', icon: 'Setting' },
       ],
     });

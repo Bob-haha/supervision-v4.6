@@ -12,10 +12,21 @@ export class P2PManager {
   private dbManager = DatabaseManager.getInstance();
   private onDataSync: OnDataSyncCallback | null = null;
 
+  private getSignalingUrl(): string {
+    try {
+      const saved = localStorage.getItem('signaling-config');
+      if (saved) {
+        const config = JSON.parse(saved);
+        return `http://${config.host || window.location.hostname}:${config.port || 3030}`;
+      }
+    } catch { /* ignore */ }
+    const hostname = window.location.hostname || 'localhost';
+    return `http://${hostname}:3030`;
+  }
+
   constructor() {
-    // 1. 初始化信令连接
-    // 生产环境下自动识别当前网页的主机地址，端口固定为 3030
-    const signalingUrl = `http://${window.location.hostname}:3030`;
+    // 初始化信令连接，优先使用用户配置的地址
+    const signalingUrl = this.getSignalingUrl();
     this.socket = io(signalingUrl, { 
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5

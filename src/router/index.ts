@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router';
+import { createRouter, createWebHashHistory } from 'vue-router';
 import Dashboard from '@/views/Dashboard/Dashboard.vue';
 import TaskView from '@/views/Task/index.vue';
 import HistoryView from '@/views/Task/HistoryView.vue';
@@ -7,7 +7,7 @@ import TemplateEditor from '@/views/Process/TemplateEditor.vue';
 import SupervisionView from '@/views/Supervision/SupervisionView.vue';
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes: [
     { path: '/', redirect: '/dashboard' },
     { path: '/dashboard', component: Dashboard },
@@ -35,6 +35,7 @@ const router = createRouter({
     { path: '/admin/departments', component: () => import('@/views/Admin/DeptManage.vue') },
     { path: '/admin/roles', component: () => import('@/views/Admin/RoleManage.vue') },
     { path: '/admin/settings', component: () => import('@/views/Admin/SystemSettings.vue') },
+    { path: '/admin/signaling', component: () => import('@/views/Admin/SignalingSettings.vue') },
   ],
 });
 
