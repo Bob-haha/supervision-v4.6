@@ -2,7 +2,7 @@
   <el-drawer
     v-model="visible"
     :title="'督办详情：' + (task?.title || '')"
-    size="45%"
+    size="55%"
     destroy-on-close
     @closed="handleClosed"
   >
@@ -48,76 +48,68 @@
         </el-descriptions-item>
       </el-descriptions>
 
-      <!-- 3. 办理留痕时间轴 -->
-      <div class="timeline-section">
-        <div class="section-title">办理全过程留痕</div>
-        <el-timeline v-if="timeline.length">
-          <el-timeline-item 
-            v-for="item in timeline" :key="item.id" 
-            :timestamp="formatDate(item.time)" 
-            :color="item.type === 'comment' ? '#722ed1' : '#52c41a'"
-          >
-            <el-card shadow="never" class="timeline-card">
-              <div class="card-header">
-                <span :class="item.type" style="font-weight: bold">
-                  {{ item.type === 'comment' ? '领导批示' : '进展汇报' }}：{{ item.name }}
-                </span>
-              </div>
-              <p class="card-body">{{ item.content }}</p>
-              
-              <!-- 附件区 -->
-              <div v-if="item.files && item.files.length > 0" class="card-attachments">
-                <div class="attach-list">
-                  <el-link v-for="(file, fIdx) in item.files" :key="fIdx" 
-                    :type="isImage(file.name) ? 'primary' : 'success'"
-                    :href="file.data" :download="file.name" 
-                    :icon="isImage(file.name) ? 'Picture' : 'Document'"
-                    class="mr-2"
-                  >
-                    {{ file.name }}
-                  </el-link>
+      <!-- 3. 管理面板 (Tabs) -->
+      <div class="tabs-section mt-4">
+        <el-tabs v-model="activeTab" type="border-card">
+          <el-tab-pane label="办理留痕" name="timeline">
+            <div class="timeline-section">
+              <el-timeline v-if="timeline.length">
+                <el-timeline-item
+                  v-for="item in timeline" :key="item.id"
+                  :timestamp="formatDate(item.time)"
+                  :color="item.type === 'comment' ? '#722ed1' : '#52c41a'"
+                >
+                  <el-card shadow="never" class="timeline-card">
+                    <div class="card-header">
+                      <span :class="item.type" style="font-weight: bold">
+                        {{ item.type === 'comment' ? '领导批示' : '进展汇报' }}：{{ item.name }}
+                      </span>
+                    </div>
+                    <p class="card-body">{{ item.content }}</p>
+                    <div v-if="item.files && item.files.length > 0" class="card-attachments">
+                      <div class="attach-list">
+                        <el-link v-for="(file, fIdx) in item.files" :key="fIdx"
+                          :type="isImage(file.name) ? 'primary' : 'success'"
+                          :href="file.data" :download="file.name"
+                          :icon="isImage(file.name) ? 'Picture' : 'Document'"
+                          class="mr-2"
+                        >{{ file.name }}</el-link>
+                      </div>
+                    </div>
+                  </el-card>
+                </el-timeline-item>
+              </el-timeline>
+              <el-empty v-else description="暂无记录" :image-size="80" />
+            </div>
+
+            <div class="input-section" v-if="authStore.user">
+              <el-divider />
+              <el-input v-model="inputContent" type="textarea" :rows="3"
+                :placeholder="authStore.user.role === 'STAFF' ? '汇报当前办理进展情况...' : '录入领导指示、批示内容...'" />
+              <div class="flex-between mt-2">
+                <el-upload action="#" multiple :auto-upload="false" :on-change="onFileChange" :file-list="tempFileList">
+                  <el-button size="small" icon="Upload">附件证明</el-button>
+                </el-upload>
+                <div class="btn-group">
+                  <el-button v-if="authStore.user.role !== 'STAFF'" type="primary" @click="doSubmit('comment')">发布批示</el-button>
+                  <el-button v-else-if="isRelatedStaff" type="success" @click="doSubmit('feedback')">提交进展</el-button>
                 </div>
               </div>
-            </el-card>
-          </el-timeline-item>
-        </el-timeline>
-        <el-empty v-else description="暂无记录，请在下方提交进展或批示" :image-size="80" />
-      </div>
+            </div>
+          </el-tab-pane>
 
-      <!-- 4. 底部录入区 -->
-      <div class="input-section" v-if="authStore.user">
-        <el-divider />
-        <el-input 
-          v-model="inputContent" 
-          type="textarea" 
-          :rows="3" 
-          :placeholder="authStore.user.role === 'STAFF' ? '汇报当前办理进展情况...' : '录入领导指示、批示内容...'" 
-        />
-        
-        <div class="flex-between mt-2">
-          <el-upload 
-            action="#" 
-            multiple 
-            :auto-upload="false" 
-            :on-change="onFileChange" 
-            :file-list="tempFileList"
-          >
-            <el-button size="small" icon="Upload">附件证明</el-button>
-          </el-upload>
-          
-          <div class="btn-group">
-            <el-button 
-              v-if="authStore.user.role !== 'STAFF'" 
-              type="primary" 
-              @click="doSubmit('comment')"
-            >发布批示</el-button>
-            <el-button 
-              v-else-if="isRelatedStaff" 
-              type="success" 
-              @click="doSubmit('feedback')"
-            >提交进展</el-button>
-          </div>
-        </div>
+          <el-tab-pane label="流程进度" name="process">
+            <ProcessPanel :task-id="task.id" />
+          </el-tab-pane>
+
+          <el-tab-pane label="协同信息" name="collaboration">
+            <CollaborationPanel :task-id="task.id" />
+          </el-tab-pane>
+
+          <el-tab-pane label="子任务" name="subtasks">
+            <SubtaskPanel :task-id="task.id" />
+          </el-tab-pane>
+        </el-tabs>
       </div>
     </div>
   </el-drawer>
@@ -130,6 +122,9 @@ import { DEPT_MAP, STATUS_MAP } from '@/constants';
 import { formatDate, safeParse } from '@/utils';
 import { useTaskStore } from '@/stores/task';
 import { useAuthStore } from '@/stores/auth';
+import ProcessPanel from './ProcessPanel.vue';
+import CollaborationPanel from './CollaborationPanel.vue';
+import SubtaskPanel from './SubtaskPanel.vue';
 
 const taskStore = useTaskStore();
 const authStore = useAuthStore();
@@ -140,6 +135,7 @@ const task = ref<any>(null);
 const timeline = ref<any[]>([]);
 const inputContent = ref('');
 const tempFileList = ref<any[]>([]);
+const activeTab = ref('timeline');
 
 // --- 计算属性 ---
 
@@ -375,6 +371,10 @@ defineExpose({ open });
 .input-section {
     margin-top: 30px;
 }
+
+/* tabs 区域 */
+.tabs-section { margin-top: 25px; }
+.mt-4 { margin-top: 20px; }
 
 /* 全局工具类 */
 .mb-4 { margin-bottom: 20px; }

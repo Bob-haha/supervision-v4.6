@@ -6,12 +6,15 @@
         <span class="desk-title">{{ pageTitle }}</span>
       </div>
       <div class="header-actions">
+        <el-button type="success" size="default" icon="MagicStick" @click="smartImportRef.open()">
+          智能导入
+        </el-button>
         <!-- 只有具备管理权限的人才能发起立项 -->
-        <el-button 
+        <el-button
           v-if="hasAdminPower"
-          type="primary" 
-          size="default" 
-          icon="Plus" 
+          type="primary"
+          size="default"
+          icon="Plus"
           @click="dialogRef.open()"
         >发起督办立项</el-button>
       </div>
@@ -126,6 +129,7 @@
     <!-- 子组件引用 -->
     <TaskFormDialog ref="dialogRef" />
     <TaskDetailDrawer ref="drawerRef" />
+    <SmartImportDialog ref="smartImportRef" />
   </div>
 </template>
 
@@ -139,7 +143,8 @@ import { formatDate } from '@/utils';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import TaskFormDialog from './components/TaskFormDialog.vue';
 import TaskDetailDrawer from './components/TaskDetailDrawer.vue';
-import './style.css'; // 引用刚才定义的对齐样式
+import SmartImportDialog from '@/components/SmartImportDialog.vue';
+import './style.css';
 
 const route = useRoute();
 const taskStore = useTaskStore();
@@ -147,6 +152,7 @@ const authStore = useAuthStore();
 
 const dialogRef = ref();
 const drawerRef = ref();
+const smartImportRef = ref();
 
 // --- 搜索表单状态 ---
 const searchForm = reactive({

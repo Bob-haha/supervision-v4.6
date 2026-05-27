@@ -111,6 +111,138 @@ export class DatabaseManager {
         attachments TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
+
+      -- 4. 同步操作日志表
+      CREATE TABLE IF NOT EXISTS sync_operation_logs (
+        id TEXT PRIMARY KEY,
+        client_id TEXT NOT NULL,
+        table_name TEXT NOT NULL,
+        record_id TEXT NOT NULL,
+        operation TEXT NOT NULL,
+        operation_data TEXT,
+        operation_timestamp INTEGER,
+        sync_status TEXT DEFAULT 'pending',
+        version INTEGER DEFAULT 1
+      );
+
+      -- 5. 同步记录映射表
+      CREATE TABLE IF NOT EXISTS sync_record_mappings (
+        id TEXT PRIMARY KEY,
+        source_client_id TEXT NOT NULL,
+        source_record_id TEXT NOT NULL,
+        local_record_id TEXT NOT NULL,
+        table_name TEXT NOT NULL,
+        operation_type TEXT,
+        sync_timestamp INTEGER
+      );
+
+      -- 6. 同步冲突记录表
+      CREATE TABLE IF NOT EXISTS sync_conflicts (
+        id TEXT PRIMARY KEY,
+        client_id TEXT,
+        table_name TEXT,
+        record_id TEXT,
+        conflict_type TEXT,
+        conflict_data TEXT,
+        resolved INTEGER DEFAULT 0,
+        conflict_timestamp INTEGER
+      );
+
+      -- 7. 流程模板库
+      CREATE TABLE IF NOT EXISTS process_templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        scope TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- 8. 流程模板环节
+      CREATE TABLE IF NOT EXISTS process_nodes (
+        id TEXT PRIMARY KEY,
+        template_id TEXT NOT NULL,
+        node_name TEXT NOT NULL,
+        node_description TEXT,
+        sort_order INTEGER NOT NULL,
+        node_type TEXT DEFAULT 'TASK'
+      );
+
+      -- 9. 任务运行时流程环节
+      CREATE TABLE IF NOT EXISTS task_process_nodes (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        template_id TEXT,
+        node_name TEXT NOT NULL,
+        node_description TEXT,
+        sort_order INTEGER NOT NULL,
+        status TEXT DEFAULT 'PENDING',
+        completed_at DATETIME,
+        completed_by TEXT
+      );
+
+      -- 10. 任务协作人
+      CREATE TABLE IF NOT EXISTS task_collaborators (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        dept_id TEXT NOT NULL,
+        person_name TEXT NOT NULL,
+        assigned_by TEXT,
+        assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        status TEXT DEFAULT 'PENDING',
+        feedback TEXT
+      );
+
+      -- 11. 个人关注事项
+      CREATE TABLE IF NOT EXISTS task_watches (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- 12. 领导批示已阅记录
+      CREATE TABLE IF NOT EXISTS leader_instruction_reads (
+        id TEXT PRIMARY KEY,
+        instruction_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        read_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      -- 13. 任务类型动态字段定义
+      CREATE TABLE IF NOT EXISTS task_type_fields (
+        id TEXT PRIMARY KEY,
+        task_type TEXT NOT NULL,
+        field_name TEXT NOT NULL,
+        field_label TEXT NOT NULL,
+        field_type TEXT DEFAULT 'TEXT',
+        sort_order INTEGER DEFAULT 0
+      );
+
+      -- 14. 任务动态字段值
+      CREATE TABLE IF NOT EXISTS task_field_values (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        field_id TEXT NOT NULL,
+        field_value TEXT
+      );
+
+      -- 15. 督办催办记录
+      CREATE TABLE IF NOT EXISTS supervision_reminders (
+        id TEXT PRIMARY KEY,
+        task_id TEXT NOT NULL,
+        reminded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        reminded_by TEXT,
+        remind_content TEXT
+      );
+
+      -- 16. 人员目录
+      CREATE TABLE IF NOT EXISTS personnel (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        dept_id TEXT NOT NULL,
+        position TEXT,
+        is_dept_head INTEGER DEFAULT 0
+      );
     `;
 
     try {
@@ -123,15 +255,35 @@ export class DatabaseManager {
       // 检查旧表是否需要增补 dept_requirements 字段（针对从旧版升级的用户）
       try {
         this.db.run("ALTER TABLE tasks ADD COLUMN dept_requirements TEXT;");
-      } catch (e) {
-        // 如果字段已存在会报错，捕获并忽略即可
-      }
+      } catch (e) { /* 字段已存在 */ }
+
+      // 迁移：tasks 表新增字段
+      try { this.db.run("ALTER TABLE tasks ADD COLUMN source TEXT DEFAULT 'OTHER';"); } catch (e) { /* 已存在 */ }
+      try { this.db.run("ALTER TABLE tasks ADD COLUMN tags TEXT DEFAULT '[]';"); } catch (e) { /* 已存在 */ }
+      try { this.db.run("ALTER TABLE tasks ADD COLUMN handler_name TEXT DEFAULT '';"); } catch (e) { /* 已存在 */ }
+      try { this.db.run("ALTER TABLE tasks ADD COLUMN is_key_task INTEGER DEFAULT 0;"); } catch (e) { /* 已存在 */ }
+
+      // 迁移：feedbacks 表新增字段
+      try { this.db.run("ALTER TABLE feedbacks ADD COLUMN is_leader_instruction INTEGER DEFAULT 0;"); } catch (e) { /* 已存在 */ }
+      try { this.db.run("ALTER TABLE feedbacks ADD COLUMN highlighted INTEGER DEFAULT 0;"); } catch (e) { /* 已存在 */ }
+
+      // 迁移：leader_comments 表新增字段
+      try { this.db.run("ALTER TABLE leader_comments ADD COLUMN attachments TEXT;"); } catch (e) { /* 已存在 */ }
+      try { this.db.run("ALTER TABLE leader_comments ADD COLUMN highlighted INTEGER DEFAULT 0;"); } catch (e) { /* 已存在 */ }
 
       await this.persist(); // 结构初始化后存一次盘
       console.log("督办系统数据库架构校验成功");
     } catch (e) {
       console.error("建表或迁移失败:", e);
     }
+  }
+
+  /**
+   * 底层 SQL 执行（不触发广播），用于同步元数据操作
+   */
+  public run(sql: string, params: any[] = []): void {
+    if (!this.db) throw new Error("数据库未就绪");
+    this.db.run(sql, params);
   }
 
   /**
@@ -220,6 +372,166 @@ public execute(sql: string, params: any[] = [], isRemote: boolean = false): void
     if (!this.db) return;
     const data = this.db.export();
     await this.saveToIndexedDB(data.buffer);
+  }
+
+  // ========== 同步元数据操作方法 ==========
+
+  /** 保存同步操作日志 */
+  saveSyncOperationLog(data: Record<string, any>): void {
+    this.run(
+      `INSERT OR REPLACE INTO sync_operation_logs
+       (id, client_id, table_name, record_id, operation, operation_data, operation_timestamp, sync_status, version)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.id,
+        data.client_id,
+        data.table_name,
+        data.record_id,
+        data.operation,
+        typeof data.operation_data === 'string' ? data.operation_data : JSON.stringify(data.operation_data),
+        data.operation_timestamp,
+        data.sync_status || 'pending',
+        data.version || 1,
+      ],
+    );
+  }
+
+  /** 更新同步操作状态 */
+  updateSyncOperationStatus(id: string, status: string): void {
+    this.run('UPDATE sync_operation_logs SET sync_status = ? WHERE id = ?', [status, id]);
+  }
+
+  /** 保存同步记录映射 */
+  saveSyncRecordMapping(data: Record<string, any>): void {
+    this.run(
+      `INSERT OR REPLACE INTO sync_record_mappings
+       (id, source_client_id, source_record_id, local_record_id, table_name, operation_type, sync_timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.id,
+        data.source_client_id,
+        data.source_record_id,
+        data.local_record_id,
+        data.table_name,
+        data.operation_type,
+        data.sync_timestamp,
+      ],
+    );
+  }
+
+  /** 删除同步记录映射 */
+  deleteSyncRecordMapping(sourceClientId: string, sourceRecordId: string, tableName: string): void {
+    this.run(
+      'DELETE FROM sync_record_mappings WHERE source_client_id = ? AND source_record_id = ? AND table_name = ?',
+      [sourceClientId, sourceRecordId, tableName],
+    );
+  }
+
+  /** 保存同步冲突记录 */
+  saveSyncConflict(data: Record<string, any>): void {
+    this.run(
+      `INSERT OR REPLACE INTO sync_conflicts
+       (id, client_id, table_name, record_id, conflict_type, conflict_data, resolved, conflict_timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.id,
+        data.client_id,
+        data.table_name,
+        data.record_id,
+        data.conflict_type,
+        typeof data.conflict_data === 'string' ? data.conflict_data : JSON.stringify(data.conflict_data),
+        data.resolved ? 1 : 0,
+        data.conflict_timestamp || Date.now(),
+      ],
+    );
+  }
+
+  /** 检查操作是否已处理 */
+  isOperationProcessed(operationId: string): boolean {
+    const result = this.query<{ count: number }>(
+      "SELECT COUNT(*) as count FROM sync_operation_logs WHERE id = ? AND sync_status = 'synced'",
+      [operationId],
+    );
+    return result[0]?.count > 0;
+  }
+
+  /** 获取指定时间之后的操作日志 */
+  getOperationsSince(timestamp: number): any[] {
+    return this.query(
+      'SELECT * FROM sync_operation_logs WHERE operation_timestamp > ? ORDER BY operation_timestamp ASC',
+      [timestamp],
+    );
+  }
+
+  /** 清理过期的操作日志 */
+  cleanupExpiredOperationLogs(retentionDays: number): void {
+    const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+    this.run(
+      "DELETE FROM sync_operation_logs WHERE operation_timestamp < ? AND sync_status = 'synced'",
+      [cutoff],
+    );
+  }
+
+  /** 清理过期的软删除记录 */
+  cleanupExpiredSoftDeletes(retentionDays: number): void {
+    const cutoff = Date.now() - retentionDays * 24 * 60 * 60 * 1000;
+    const tables = ['tasks', 'feedbacks', 'leader_comments'];
+    for (const table of tables) {
+      this.run(`DELETE FROM ${table} WHERE is_deleted = 1 AND deleted_at < ?`, [cutoff]);
+    }
+  }
+
+  // ========== 业务表操作方法（SyncFramework 兼容） ==========
+
+  /** 保存工作任务记录 */
+  saveWorkTask(data: Record<string, any>): string {
+    const id = data.id;
+    const existing = this.query('SELECT id FROM tasks WHERE id = ?', [id]);
+    if (existing.length > 0) {
+      const keys = Object.keys(data).filter((k) => k !== 'id');
+      const setClauses = keys.map((k) => `${k} = ?`).join(', ');
+      const values = keys.map((k) => data[k]);
+      this.run(`UPDATE tasks SET ${setClauses} WHERE id = ?`, [...values, id]);
+    } else {
+      this.run(
+        `INSERT INTO tasks (id, parent_id, level, title, content, task_type, priority,
+         owner_dept_ids, co_dept_ids, dept_requirements, co_dept_requirements,
+         deadline, status, progress, leader_instructions, is_history, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          id, data.parent_id || null, data.level || 1, data.title || '', data.content || '',
+          data.task_type || '常规', data.priority || 'MEDIUM',
+          data.owner_dept_ids || '[]', data.co_dept_ids || '[]',
+          data.dept_requirements || '{}', data.co_dept_requirements || '{}',
+          data.deadline || null, data.status || 'PENDING', data.progress || 0,
+          data.leader_instructions || null, data.is_history || 0, data.created_at || new Date().toISOString(),
+        ],
+      );
+    }
+    return id;
+  }
+
+  /** 获取工作任务记录 */
+  getWorkTask(recordId: string): Record<string, any> | null {
+    const results = this.query('SELECT * FROM tasks WHERE id = ?', [recordId]);
+    return results.length > 0 ? results[0] : null;
+  }
+
+  /** 获取年度任务记录（当前项目无此表，返回 null） */
+  getAnnualTask(_recordId: string): null {
+    return null;
+  }
+
+  /** 软删除工作任务 */
+  softDeleteWorkTask(recordId: string, deletedBy: string): void {
+    this.run('UPDATE tasks SET is_deleted = 1, deleted_at = ?, deleted_by = ? WHERE id = ?', [
+      Date.now(), deletedBy, recordId,
+    ]);
+  }
+
+  /** 硬删除工作任务 */
+  deleteWorkTask(recordId: string): void {
+    this.run('DELETE FROM tasks WHERE id = ?', [recordId]);
   }
 
   // --- IndexedDB 底层封装 ---

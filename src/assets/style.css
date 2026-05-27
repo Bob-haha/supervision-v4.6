@@ -1,37 +1,87 @@
 :root {
-  --hb-blue: #0d2a61;       /* 顶部深蓝 */
-  --hb-sidebar: #2c3e50;    /* 侧边栏背景 */
-  --hb-bg: #f0f2f5;         /* 全局背景浅灰 */
-  --hb-text-main: #333333;
-  --hb-border: #dcdfe6;
+  /* 色彩系统 */
+  --color-primary: #0B2A6B;
+  --color-primary-light: #165DFF;
+  --color-primary-bg: #E8F0FE;
+  --color-success: #52C41A;
+  --color-success-bg: #F0FBE6;
+  --color-warning: #FAAD14;
+  --color-warning-bg: #FFFBE6;
+  --color-danger: #FF4D4F;
+  --color-danger-bg: #FFF1F0;
+  --color-leader: #722ED1;
+  --color-leader-bg: #F9F0FF;
+  --color-info: #165DFF;
+  --color-info-bg: #E8F0FE;
+
+  /* 背景与表面 */
+  --bg-page: #F5F7FA;
+  --bg-card: #FFFFFF;
+  --bg-header: #0B2A6B;
+  --bg-sidebar: #001529;
+  --bg-menu-hover: rgba(22, 93, 255, 0.06);
+  --bg-menu-active: rgba(22, 93, 255, 0.08);
+
+  /* 边框 */
+  --border-color: #E5E6EB;
+  --border-light: #F0F0F0;
+
+  /* 文字 */
+  --text-primary: #1D2129;
+  --text-secondary: #4E5969;
+  --text-tertiary: #86909C;
+  --text-disabled: #C9CDD4;
+  --text-white: #FFFFFF;
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-round: 50%;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.10);
+
+  /* 间距 */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+
+  /* 过渡 */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+
+  /* 字体 */
+  --font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "HarmonyOS Sans", sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 22px;
+  --font-size-3xl: 28px;
+
+  /* 布局 */
+  --header-height: 72px;
+  --sidebar-width: 260px;
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background-color: var(--hb-bg);
+  background-color: var(--bg-page);
   margin: 0;
   padding: 0;
-  font-family: "Microsoft YaHei", sans-serif;
-}
-
-/* 仿照照片中的公文列表样式 */
-.doc-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 15px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-  transition: background 0.2s;
-}
-
-.doc-item:hover {
-  background: #f5f7fa;
-}
-
-.doc-tag {
-  border: 1px solid #409EFF;
-  color: #409EFF;
-  padding: 0 4px;
-  font-size: 12px;
-  margin-right: 10px;
-  border-radius: 2px;
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

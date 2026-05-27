@@ -1,58 +1,141 @@
 <template>
   <div class="app-wrapper">
-    <!-- 1. 数据库加载遮罩 -->
+    <!-- 数据库加载遮罩 -->
     <div v-if="!isDbReady" class="loading-screen">
-      <el-icon class="is-loading" size="40"><Loading /></el-icon>
-      <p>正在初始化督办系统数据库...</p>
+      <div class="loading-spinner">
+        <el-icon class="is-loading" size="48" color="#165DFF"><Loading /></el-icon>
+      </div>
+      <p class="loading-text">正在初始化督办系统数据库...</p>
     </div>
 
     <template v-else>
-      <!-- 2. 身份选择拦截 -->
+      <!-- 身份选择 -->
       <RoleSelect v-if="!authStore.user" />
 
-      <!-- 3. HB2020 风格业务主布局 -->
-      <el-container v-else class="hb-layout">
-        <el-header class="hb-header" height="80px">
+      <!-- V3.0 主布局 -->
+      <el-container v-else class="v3-layout">
+        <!-- ===== 顶部导航 72px ===== -->
+        <el-header class="v3-header" height="72px">
           <div class="header-left">
-            <el-icon size="32"><Platform /></el-icon>
-            <div class="title-group">
-              <span class="system-title">督办管理系统 V2.0</span>
-              <span class="slogan">守国门 促发展 当好让党放心 让人民满意的国门卫士</span>
+            <div class="logo-area">
+              <div class="logo-icon-box">
+                <el-icon size="24" color="#FFFFFF"><Platform /></el-icon>
+              </div>
+              <div class="logo-text">
+                <span class="logo-title">督办管理系统</span>
+                <span class="logo-ver">V3.0</span>
+              </div>
+            </div>
+            <div class="logo-subtitle">
+              守国门 促发展 当好让党放心 让人民满意的国门卫士
             </div>
           </div>
+
+          <div class="header-center">
+            <div class="global-search">
+              <el-icon size="18" color="#86909C"><Search /></el-icon>
+              <input
+                v-model="searchKeyword"
+                type="text"
+                class="search-input"
+                placeholder="搜索任务、人员、流程..."
+                @keydown.enter="doGlobalSearch"
+              />
+              <span class="search-shortcut">Ctrl+K</span>
+            </div>
+          </div>
+
           <div class="header-right">
-            <el-button link class="logout-btn" @click="authStore.logout">
-              <el-icon><SwitchButton /></el-icon> 切换身份
-            </el-button>
+            <!-- 消息中心 -->
+            <el-badge :value="unreadMsgCount" :hidden="!unreadMsgCount" :max="99">
+              <div class="header-icon-btn" title="消息中心">
+                <el-icon size="20"><Message /></el-icon>
+              </div>
+            </el-badge>
+
+            <!-- 待办提醒 -->
+            <el-badge :value="pendingCount" :hidden="!pendingCount" :max="99">
+              <div class="header-icon-btn" title="待办提醒">
+                <el-icon size="20"><Bell /></el-icon>
+              </div>
+            </el-badge>
+
+            <!-- 系统通知 -->
+            <el-badge is-dot :hidden="!hasSystemNotice">
+              <div class="header-icon-btn" title="系统通知">
+                <el-icon size="20"><Notification /></el-icon>
+              </div>
+            </el-badge>
+
+            <div class="header-divider"></div>
+
+            <!-- 用户信息 -->
+            <el-dropdown trigger="click" @command="handleUserCmd">
+              <div class="user-area">
+                <div class="user-avatar">
+                  <el-icon size="20"><UserFilled /></el-icon>
+                </div>
+                <div class="user-info">
+                  <span class="user-name">{{ authStore.user.name }}</span>
+                  <span class="user-dept">{{ getDeptName(authStore.user.deptId) }}</span>
+                </div>
+                <el-icon size="14" color="#86909C"><ArrowDown /></el-icon>
+              </div>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="profile">
+                    <el-icon><User /></el-icon> 个人信息
+                  </el-dropdown-item>
+                  <el-dropdown-item command="settings">
+                    <el-icon><Setting /></el-icon> 系统设置
+                  </el-dropdown-item>
+                  <el-dropdown-item divided command="logout">
+                    <el-icon><SwitchButton /></el-icon> 切换身份
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </el-header>
 
-        <el-container class="hb-body">
-          <el-aside width="260px" class="hb-aside">
-            <div class="user-profile">
-              <div class="avatar-box"><el-icon size="30"><UserFilled /></el-icon></div>
-              <div class="info-text">
-                <div class="name">{{ authStore.user.name }}</div>
-                <div class="role-row">
-                  <span class="tag">{{ '新沙海关' }}</span>
-                  <span class="dept">{{ getDeptName(authStore.user.deptId) }}</span>
+        <!-- ===== 主体区域 ===== -->
+        <el-container class="v3-body">
+          <!-- 左侧菜单 260px -->
+          <el-aside width="260px" class="v3-sidebar">
+            <div class="sidebar-scroll">
+              <template v-for="group in menuGroups" :key="group.title">
+                <div class="menu-group-title">{{ group.title }}</div>
+                <div
+                  v-for="item in group.items"
+                  :key="item.path"
+                  class="menu-item"
+                  :class="{ active: isMenuActive(item) }"
+                  @click="navigateTo(item.path)"
+                >
+                  <div class="menu-item-icon">
+                    <el-icon size="18"><component :is="item.icon" /></el-icon>
+                  </div>
+                  <span class="menu-item-label">{{ item.label }}</span>
+                  <el-badge v-if="item.badge" :value="item.badge" class="menu-badge" />
                 </div>
-              </div>
+              </template>
             </div>
 
-            <el-menu active-text-color="#ffd04b" background-color="#0a1d37" text-color="#fff" router :default-active="route.fullPath" class="hb-menu">
-              <el-menu-item index="/dashboard"><el-icon><DataBoard /></el-icon><span>督办总览看板</span></el-menu-item>
-              <el-divider class="menu-sep">任务管理</el-divider>
-              <el-menu-item index="/tasks"><el-icon><Monitor /></el-icon><span>全部督办事项</span></el-menu-item>
-              <el-menu-item index="/host"><el-icon><EditPen /></el-icon><span>科室主办事项</span></el-menu-item>
-              <el-menu-item index="/Co-organized"><el-icon><EditPen /></el-icon><span>科室协办事项</span></el-menu-item>
-              <el-menu-item index="/dept-completed"><el-icon><EditPen /></el-icon><span>科室办结事项</span></el-menu-item>
-              <el-divider class="menu-sep">历史档案</el-divider>
-              <el-menu-item index="/history"><el-icon><Finished /></el-icon><span>办结归档事项</span></el-menu-item>
-            </el-menu>
+            <!-- 侧边栏底部 -->
+            <div class="sidebar-footer">
+              <div class="footer-info">
+                <el-icon size="14" color="#52C41A"><CircleCheckFilled /></el-icon>
+                <span>系统运行正常</span>
+              </div>
+              <div class="footer-info">
+                <span class="footer-dot online"></span>
+                <span>内网节点 {{ syncStore.peerCount }} 个在线</span>
+              </div>
+            </div>
           </el-aside>
 
-          <el-main class="hb-main">
+          <!-- 内容区 -->
+          <el-main class="v3-main">
             <router-view />
           </el-main>
         </el-container>
@@ -62,46 +145,156 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useTaskStore } from '@/stores/task';
+import { useSyncStore } from '@/stores/sync';
 import { DatabaseManager } from '@/core/database/DatabaseManager';
-import { P2PManager } from '@/core/sync/P2PManager';
-import RoleSelect from '@/views/Auth/RoleSelect.vue';
+import { P2PSyncManager } from '@/core/sync/P2PSyncManager';
+import { eventBus } from '@/utils/eventBus';
 import { DEPT_MAP } from '@/constants';
-import { 
-  Loading, Platform, SwitchButton, Monitor, DataBoard,
-  EditPen, Finished, UserFilled 
+import RoleSelect from '@/views/Auth/RoleSelect.vue';
+import {
+  Loading, Platform, Search, Message, Bell, Notification,
+  UserFilled, ArrowDown, User, Setting, SwitchButton,
+  DataBoard, Monitor, Clock, Connection, Star, CircleCheck,
+  SetUp, AlarmClock, Finished, PieChart, TrendCharts,
+  OfficeBuilding, Lock, CircleCheckFilled
 } from '@element-plus/icons-vue';
+import { ElMessage } from 'element-plus';
 
 const authStore = useAuthStore();
 const taskStore = useTaskStore();
+const syncStore = useSyncStore();
 const route = useRoute();
+const router = useRouter();
 const isDbReady = ref(false);
-let p2p: P2PManager | null = null;
+const searchKeyword = ref('');
+let p2pSync: P2PSyncManager | null = null;
 
 const getDeptName = (id: string) => DEPT_MAP[id] || '';
 
+const unreadMsgCount = ref(0);
+const hasSystemNotice = ref(false);
+
+const pendingCount = computed(() => {
+  const deptId = authStore.user?.deptId || '';
+  if (!deptId) return 0;
+  const now = new Date().toISOString().split('T')[0];
+  return taskStore.tasks.filter(t =>
+    t.status !== 'COMPLETED' &&
+    (t.owner_dept_ids || []).includes(deptId) &&
+    t.deadline && t.deadline < now
+  ).length;
+});
+
+const menuGroups = computed(() => {
+  const isAdmin = authStore.isAdmin || authStore.isLeader;
+  const groups: any[] = [
+    {
+      title: '首页看板',
+      items: [
+        { path: '/dashboard', label: '首页看板', icon: 'DataBoard' },
+      ],
+    },
+    {
+      title: '任务管理',
+      items: [
+        { path: '/tasks', label: '全部事项', icon: 'Monitor' },
+        { path: '/my-pending', label: '我的待办', icon: 'Clock', badge: pendingCount.value || 0 },
+        { path: '/Co-organized', label: '我的协办', icon: 'Connection' },
+        { path: '/my-watched', label: '我的关注', icon: 'Star' },
+        { path: '/dept-completed', label: '已办事项', icon: 'CircleCheck' },
+      ],
+    },
+    {
+      title: '流程督办',
+      items: [
+        { path: '/process/templates', label: '流程模板库', icon: 'SetUp' },
+        { path: '/supervision', label: '督办管理', icon: 'Bell' },
+        { path: '/history', label: '历史档案', icon: 'Finished' },
+      ],
+    },
+    {
+      title: '数据统计',
+      items: [
+        { path: '/stats/dept', label: '科室数据看板', icon: 'PieChart' },
+        { path: '/stats/guanqu', label: '关区数据看板', icon: 'TrendCharts' },
+      ],
+    },
+  ];
+
+  if (isAdmin) {
+    groups.push({
+      title: '系统管理',
+      items: [
+        { path: '/admin/personnel', label: '人员管理', icon: 'User' },
+        { path: '/admin/departments', label: '部门管理', icon: 'OfficeBuilding' },
+        { path: '/admin/roles', label: '角色权限', icon: 'Lock' },
+        { path: '/admin/settings', label: '系统设置', icon: 'Setting' },
+      ],
+    });
+  }
+
+  return groups;
+});
+
+function isMenuActive(item: any) {
+  if (item.path === '/dashboard') return route.path === '/dashboard';
+  if (item.path === '/my-pending') return route.path === '/host';
+  if (item.path === '/my-watched') return route.path === '/my-watched';
+  return route.path === item.path || route.path.startsWith(item.path + '/');
+}
+
+function navigateTo(path: string) {
+  if (path === '/my-pending') path = '/host';
+  router.push(path);
+}
+
+function doGlobalSearch() {
+  if (!searchKeyword.value.trim()) return;
+  router.push({ path: '/tasks', query: { search: searchKeyword.value } });
+  searchKeyword.value = '';
+}
+
+function handleUserCmd(cmd: string) {
+  if (cmd === 'logout') authStore.logout();
+  else if (cmd === 'profile') ElMessage.info('个人信息页面');
+  else if (cmd === 'settings') router.push('/admin/settings');
+}
+
+function parseSQLOperation(sql: string, params: any[]): { table: string; recordId: string; operation: 'INSERT' | 'UPDATE' | 'DELETE' } | null {
+  const upper = sql.trim().toUpperCase();
+  const tableMatch = sql.match(/(?:INTO|FROM|UPDATE)\s+(\w+)/i);
+  if (!tableMatch) return null;
+  const table = tableMatch[1].toLowerCase();
+  const recordId = params[0] || '';
+  if (upper.startsWith('INSERT')) return { table, recordId, operation: 'INSERT' };
+  if (upper.startsWith('UPDATE')) return { table, recordId, operation: 'UPDATE' };
+  if (upper.startsWith('DELETE')) return { table, recordId, operation: 'DELETE' };
+  return null;
+}
+
 onMounted(async () => {
   try {
-    // 1. 初始化数据库
     const dbManager = DatabaseManager.getInstance();
     await dbManager.init();
-    p2p = new P2PManager();
-    (window as any).p2pInstance = p2p;
-    // 2. 初始化 P2P 同步
-   
-    
-    // 3. 核心绑定：SQL 执行时自动广播给 P2P
+
+    p2pSync = P2PSyncManager.getInstance();
+    (window as any).p2pSyncInstance = p2pSync;
+    await p2pSync.initialize();
+
     dbManager.setOnExecute((sql, params) => {
-      p2p?.broadcastSQL(sql, params);
+      const parsed = parseSQLOperation(sql, params);
+      if (parsed) {
+        p2pSync?.recordChange(parsed.table, parsed.recordId, parsed.operation);
+      }
     });
 
-    // 4. 核心绑定：P2P 收到新数据时自动刷新 Store
-    p2p.setOnDataSync(() => {
-      taskStore.fetchTasks();
-    });
+    eventBus.on('store-update:tasks', () => taskStore.fetchTasks());
+    eventBus.on('leader-comment-added', () => taskStore.fetchTasks());
+    eventBus.on('task-updated', () => taskStore.fetchTasks());
 
     authStore.loadFromStorage();
     isDbReady.value = true;
@@ -110,197 +303,355 @@ onMounted(async () => {
   }
 });
 
-// 页面关闭前销毁 P2P 连接，防止内存泄露
 onUnmounted(() => {
-  p2p?.destroyAll();
+  p2pSync?.disconnect();
 });
 </script>
 
 <style>
-/* 1. 彻底锁定网页高度，防止出现双滚动条或背景断层 */
+/* ===== 全局重置 ===== */
 html, body, #app, .app-wrapper {
   height: 100vh;
   width: 100vw;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* 根容器禁止滚动，由内部 Main 容器滚动 */
-  font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
+  overflow: hidden;
+  font-family: var(--font-family);
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  background: var(--bg-page);
 }
 
-/* 2. 数据库加载遮罩 - 居中且全屏 */
+/* ===== 加载屏 ===== */
 .loading-screen {
   height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: #f4f7fa;
-  color: #0d2a61;
+  background: var(--bg-page);
+  gap: 16px;
+}
+.loading-text {
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
 }
 
-/* 3. 主布局架构 - 强制占满屏幕 */
-.hb-layout {
+/* ===== V3.0 主布局 ===== */
+.v3-layout {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f4f7fa;
+  background: var(--bg-page);
 }
 
-/* 4. 顶部页眉 - 修正文字重叠与对齐 */
-.hb-header {
-  height: 80px !important; /* 增加高度 */
-  background-color: #0d2a61;
-  color: white;
+/* ===== 顶部导航 72px ===== */
+.v3-header {
+  height: 72px !important;
+  background: var(--bg-header);
+  color: var(--text-white);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 30px;
-  border-bottom: 4px solid #ffd04b; /* 加粗金边 */
-  flex-shrink: 0; /* 禁止页眉被挤压 */
+  padding: 0 24px;
+  flex-shrink: 0;
   box-sizing: border-box;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
-.header-left { 
-  display: flex; 
-  align-items: center; 
-  gap: 20px; 
-}
-
-.title-group { 
-  display: flex; 
-  flex-direction: column;
-  justify-content: center;
-}
-
-.system-title { 
-  font-size: 26px; 
-  font-weight: bold; 
-  letter-spacing: 2px;
-  line-height: 1.2;
-}
-
-.slogan { 
-  font-size: 14px; 
-  opacity: 0.8; 
-  margin-top: 5px; 
-  font-family: "SimSun", "STSong", serif;
-  letter-spacing: 1px;
-}
-
-.logout-btn { 
-  color: #fff !important; 
-  font-size: 15px;
-}
-
-/* 5. 中间主体区 */
-.hb-body {
-  flex: 1; /* 自动填充剩余高度 */
+.header-left {
   display: flex;
-  overflow: hidden; /* 让侧边栏和主内容区独立控制 */
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
 }
 
-/* 6. 侧边栏 - 修正高度和个人信息显示 */
-.hb-aside {
-  width: 300px !important; /* 调宽侧边栏 */
-  background-color: #0a1d37;
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon-box {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logo-text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.logo-title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.logo-ver {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+}
+
+.logo-subtitle {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  padding-left: 20px;
+  border-left: 1px solid rgba(255, 255, 255, 0.15);
+  white-space: nowrap;
+  font-family: "SimSun", "PingFang SC", serif;
+}
+
+/* 全局搜索 */
+.header-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 0 40px;
+  max-width: 480px;
+}
+
+.global-search {
+  width: 100%;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 8px;
+  transition: background var(--transition-fast);
+  border: 1px solid transparent;
+}
+.global-search:focus-within {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: var(--font-size-md);
+  font-family: var(--font-family);
+}
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-shortcut {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+/* 右侧 */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.header-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.75);
+  transition: all var(--transition-fast);
+}
+.header-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0 8px;
+}
+
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+.user-area:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.user-name {
+  font-size: var(--font-size-md);
+  font-weight: 500;
+}
+
+.user-dept {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ===== 主体区域 ===== */
+.v3-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ===== 侧边栏 260px ===== */
+.v3-sidebar {
+  width: 260px !important;
+  background: var(--bg-sidebar);
   display: flex;
   flex-direction: column;
   height: 100%;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
-.user-profile {
-  padding: 30px 20px;
-  background: rgba(255, 255, 255, 0.05);
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.menu-group-title {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.28);
+  padding: 20px 20px 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.menu-item {
   display: flex;
   align-items: center;
-  gap: 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  height: 44px;
+  margin: 2px 12px;
+  padding: 0 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.65);
+  transition: all var(--transition-fast);
+  position: relative;
+  gap: 10px;
+}
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.85);
+}
+.menu-item.active {
+  background: var(--bg-menu-active);
+  color: #fff;
+}
+.menu-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--color-primary-light);
+  border-radius: 2px;
 }
 
-.avatar-box {
-  background: #1a2d4b;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+.menu-item-icon {
+  width: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #ffd04b;
-  border: 2px solid #ffd04b;
   flex-shrink: 0;
 }
 
-.info-text .name { 
-  color: #fff; 
-  font-size: 20px; 
-  font-weight: bold;
-}
-
-.role-row { 
-  margin-top: 6px; 
-  display: flex; 
-  align-items: center; 
-  gap: 8px; 
-}
-
-.role-row .tag { 
-  background: #ffd04b; 
-  color: #0d2a61; 
-  font-size: 11px; 
-  padding: 2px 6px; 
-  border-radius: 4px; 
-  font-weight: bold;
-}
-
-.role-row .dept { 
-  color: #90a4ae; 
-  font-size: 12px;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* 7. 导航菜单 - 修正字号与样式 */
-.hb-menu {
+.menu-item-label {
+  font-size: var(--font-size-md);
   flex: 1;
-  border-right: none !important;
-  overflow-y: auto; /* 菜单过多时可滚动 */
 }
 
-.el-menu-item {
-  font-size: 16px !important;
-  height: 56px !important;
-  line-height: 56px !important;
+.menu-badge {
+  flex-shrink: 0;
 }
 
-.menu-sep {
-  margin: 15px 0 5px !important;
-  border-top-color: rgba(255, 255, 255, 0.1) !important;
-  color: #546e7a !important;
-  font-size: 12px;
-}
-
-/* 8. 主内容区 - 修正滚动逻辑 */
-.hb-main {
-  background-color: #f4f7fa;
-  padding: 25px !important;
-  overflow-y: auto; /* 核心：只有这里负责垂直滚动 */
+/* 侧边栏底部状态 */
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
-/* 全局滚动条美化 */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+.footer-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
 }
-::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
+
+.footer-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #86909C;
 }
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.footer-dot.online {
+  background: #52C41A;
 }
+
+/* ===== 主内容区 ===== */
+.v3-main {
+  background: var(--bg-page);
+  padding: 20px 24px !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ===== 全局滚动条 ===== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.20); }
+::-webkit-scrollbar-track { background: transparent; }
 </style>

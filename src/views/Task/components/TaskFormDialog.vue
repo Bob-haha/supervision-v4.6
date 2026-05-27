@@ -14,11 +14,36 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="任务类型">
+          <el-select v-model="form.task_type" style="width:100%">
+            <el-option v-for="t in TASK_TYPES" :key="t" :label="t" :value="t" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="任务来源">
+          <el-select v-model="form.source" style="width:100%">
+            <el-option v-for="(label, value) in TASK_SOURCE_MAP" :key="value" :label="label" :value="value" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="标签">
+          <el-select v-model="form.tags" multiple filterable allow-create placeholder="输入或选择标签" style="width:100%">
+            <el-option v-for="tag in TASK_TAGS" :key="tag" :label="tag" :value="tag" />
+          </el-select>
+        </el-form-item>
+
         <!-- 填写事项描述，公共要求 -->
       <el-form-item label="事项描述/公共要求">
         <el-input v-model="form.content" type="textarea" :rows="4" placeholder="填写事项描述或公共要求..." />
       </el-form-item>
 
+      <el-form-item label="主办人" v-if="authStore.isAdmin || authStore.isLeader">
+        <PersonSelector v-model="form.handler_name" :dept-id="form.owner_dept_ids[0]" />
+      </el-form-item>
+
+      <el-form-item label="重点任务">
+        <el-switch v-model="form.is_key_task" active-text="是" inactive-text="否" />
+      </el-form-item>
 
       <el-form-item label="主办科室" required>
         <el-select v-model="form.owner_dept_ids" multiple collapse-tags style="width:100%">
@@ -47,6 +72,42 @@
           <el-input v-model="form.co_dept_requirements[id]" type="textarea" :rows="2" placeholder="填写配合要求..." />
         </div>
       </div>
+
+      <!-- 动态统计字段（根据任务类型显示） -->
+      <div v-if="dynamicFields.length" class="dynamic-fields-box mt-3">
+        <div class="section-label">数据统计字段</div>
+        <el-row :gutter="16">
+          <el-col :span="12" v-for="field in dynamicFields" :key="field.id">
+            <el-form-item :label="field.field_label">
+              <el-input
+                v-if="field.field_type === 'TEXT'"
+                v-model="form.dynamic_values[field.id]"
+                placeholder="请输入..."
+              />
+              <el-input-number
+                v-else-if="field.field_type === 'NUMBER'"
+                v-model="form.dynamic_values[field.id]"
+                :min="0"
+                style="width:100%"
+              />
+              <el-input
+                v-else-if="field.field_type === 'CURRENCY'"
+                v-model="form.dynamic_values[field.id]"
+                placeholder="金额"
+              >
+                <template #prefix>¥</template>
+              </el-input>
+              <el-date-picker
+                v-else-if="field.field_type === 'DATE'"
+                v-model="form.dynamic_values[field.id]"
+                type="date"
+                value-format="YYYY-MM-DD"
+                style="width:100%"
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
+      </div>
     </el-form>
 
     <template #footer>
@@ -57,22 +118,31 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
-import { DEPT_MAP } from '@/constants';
+import { ref, reactive, watch, computed } from 'vue';
+import { DEPT_MAP, TASK_SOURCE_MAP, TASK_TAGS, TASK_TYPES } from '@/constants';
 import { useTaskStore } from '@/stores/task';
+import { useAuthStore } from '@/stores/auth';
+import { useStatisticsStore } from '@/stores/statistics';
 import { safeParse } from '@/utils';
+import PersonSelector from '@/components/PersonSelector.vue';
 import { ElMessage } from 'element-plus';
 
 const taskStore = useTaskStore();
+const authStore = useAuthStore();
+const statisticsStore = useStatisticsStore();
 const visible = ref(false);
 const isEdit = ref(false);
 const editId = ref('');
 const isSaving = ref(false);
 
+const dynamicFields = computed(() => statisticsStore.getTaskTypeFields(form.task_type));
+
 const form = reactive<any>({
-  title: '', deadline: '', 
-  owner_dept_ids: [], co_dept_ids: [], 
-  dept_requirements: {}, co_dept_requirements: {} 
+  title: '', deadline: '',
+  owner_dept_ids: [], co_dept_ids: [],
+  dept_requirements: {}, co_dept_requirements: {},
+  task_type: '常规', source: 'OTHER', tags: [], handler_name: '', is_key_task: false,
+  dynamic_values: {},
 });
 
 // 【核心修复】：增加非空判断，防止 forEach 崩溃
@@ -90,13 +160,21 @@ watch(() => [form.owner_dept_ids, form.co_dept_ids], ([os, cs]) => {
 }, { deep: true });
 
 const open = (levelOrTask?: any, parentId?: string) => {
+  const resetExtras = () => {
+    form.task_type = '常规';
+    form.source = 'OTHER';
+    form.tags = [];
+    form.handler_name = '';
+    form.is_key_task = false;
+  };
+
   if (typeof levelOrTask === 'number' && parentId) {
     // 下发模式：创建新任务，设置级别和父任务ID
     isEdit.value = false;
     editId.value = '';
     form.title = '';
     form.content = '';
-    form.deadline = ''; // 这里设为空字符串，Store 会转为 null
+    form.deadline = '';
     form.level = levelOrTask;
     form.parent_id = parentId;
     form.priority = 'MEDIUM';
@@ -104,6 +182,7 @@ const open = (levelOrTask?: any, parentId?: string) => {
     form.co_dept_ids = [];
     form.dept_requirements = {};
     form.co_dept_requirements = {};
+    resetExtras();
   } else if (levelOrTask) {
     // 修改模式
     isEdit.value = true;
@@ -111,15 +190,19 @@ const open = (levelOrTask?: any, parentId?: string) => {
     Object.assign(form, {
       ...levelOrTask,
       dept_requirements: safeParse(levelOrTask.dept_requirements, {}),
-      co_dept_requirements: safeParse(levelOrTask.co_dept_requirements, {})
+      co_dept_requirements: safeParse(levelOrTask.co_dept_requirements, {}),
+      source: levelOrTask.source || 'OTHER',
+      tags: Array.isArray(levelOrTask.tags) ? levelOrTask.tags : safeParse(levelOrTask.tags, []),
+      handler_name: levelOrTask.handler_name || '',
+      is_key_task: !!levelOrTask.is_key_task,
     });
   } else {
-    // 新建模式：手动清空所有属性，确保没有 undefined
+    // 新建模式
     isEdit.value = false;
     editId.value = '';
     form.title = '';
     form.content = '';
-    form.deadline = ''; // 这里设为空字符串，Store 会转为 null
+    form.deadline = '';
     form.level = 1;
     form.parent_id = null;
     form.priority = 'MEDIUM';
@@ -127,6 +210,7 @@ const open = (levelOrTask?: any, parentId?: string) => {
     form.co_dept_ids = [];
     form.dept_requirements = {};
     form.co_dept_requirements = {};
+    resetExtras();
   }
   visible.value = true;
 };
@@ -134,23 +218,37 @@ const open = (levelOrTask?: any, parentId?: string) => {
 
 const save = async () => {
   if (!form.title) return ElMessage.error('标题不能为空');
-  
+
   isSaving.value = true;
   try {
-    // 构造发往 store 的数据包
-    const payload = { 
-      ...form, 
-      // 必须将对象转为 JSON 字符串
+    const payload = {
+      ...form,
       dept_requirements: JSON.stringify(form.dept_requirements || {}),
-      co_dept_requirements: JSON.stringify(form.co_dept_requirements || {})
+      co_dept_requirements: JSON.stringify(form.co_dept_requirements || {}),
     };
-    
+    // 移除 dynamic_values（不存入任务表）
+    delete payload.dynamic_values;
+
+    let taskId = editId.value;
     if (isEdit.value) {
-      await taskStore.updateTask(editId.value, payload);
+      await taskStore.updateTask(taskId, payload);
     } else {
+      // createTask doesn't return id, so we need to get it differently
       await taskStore.createTask(payload);
+      await taskStore.fetchTasks();
+      taskId = taskStore.tasks[0]?.id; // 最新创建的任务
     }
-    
+
+    // 保存动态字段值
+    if (form.dynamic_values && taskId) {
+      for (const field of dynamicFields.value) {
+        const val = form.dynamic_values[field.id];
+        if (val !== undefined && val !== '') {
+          await statisticsStore.setTaskFieldValue(taskId, field.id, String(val));
+        }
+      }
+    }
+
     visible.value = false;
     ElMessage.success('事项已保存并持久化');
   } catch (error) {
@@ -204,6 +302,21 @@ defineExpose({ open });
     margin-right: 8px;
     display: inline-block;
 }
+
+.dynamic-fields-box {
+  background: #f0f9eb;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px dashed #67c23a;
+  margin: 15px 0 25px;
+}
+.section-label {
+  font-size: 15px;
+  font-weight: bold;
+  color: #0d2a61;
+  margin-bottom: 15px;
+}
+.mt-3 { margin-top: 15px; }
 
 .mb-3 {
     margin-bottom: 15px;

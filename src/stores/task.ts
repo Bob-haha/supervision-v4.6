@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { SupervisionTask} from '@/types'; 
+import type { SupervisionTask} from '@/types';
 import { DatabaseManager } from '@/core/database/DatabaseManager';
 import { v4 as uuidv4 } from 'uuid';
+import { eventBus } from '@/utils/eventBus';
 
 export const useTaskStore = defineStore('task', () => {
   const tasks = ref<SupervisionTask[]>([]);
@@ -14,7 +15,8 @@ export const useTaskStore = defineStore('task', () => {
     tasks.value = raw.map(t => ({
       ...t,
       owner_dept_ids: JSON.parse(t.owner_dept_ids || '[]'),
-      co_dept_ids: JSON.parse(t.co_dept_ids || '[]')
+      co_dept_ids: JSON.parse(t.co_dept_ids || '[]'),
+      tags: safeParseJSON(t.tags, []),
     }));
   }
 
@@ -25,13 +27,13 @@ export const useTaskStore = defineStore('task', () => {
 
 async function createTask(payload: any) {
   const id = uuidv4();
-  // 【关键修改点】：增加 OR REPLACE
   const sql = `
     INSERT OR REPLACE INTO tasks (
-      id, parent_id, level, title, content, task_type, priority, 
+      id, parent_id, level, title, content, task_type, priority,
       owner_dept_ids, co_dept_ids, dept_requirements, co_dept_requirements,
-      deadline, status, progress, is_history, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      deadline, status, progress, is_history, created_at,
+      source, tags, handler_name, is_key_task
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   
   const params = [
@@ -40,7 +42,7 @@ async function createTask(payload: any) {
     payload.level ?? 1,
     payload.title ?? '',
     payload.content ?? '',
-    '常规',
+    payload.task_type ?? '常规',
     payload.priority ?? 'MEDIUM',
     JSON.stringify(payload.owner_dept_ids || []),
     JSON.stringify(payload.co_dept_ids || []),
@@ -50,7 +52,11 @@ async function createTask(payload: any) {
     'PENDING',
     0,
     0,
-    new Date().toISOString()
+    new Date().toISOString(),
+    payload.source ?? 'OTHER',
+    JSON.stringify(payload.tags || []),
+    payload.handler_name ?? '',
+    payload.is_key_task ? 1 : 0,
   ];
 
   dbManager.execute(sql, params);
@@ -61,14 +67,15 @@ async function createTask(payload: any) {
 // --- 修改更新逻辑 ---
 async function updateTask(id: string, payload: any) {
   const sql = `
-    UPDATE tasks SET 
-      title = ?, content = ?, deadline = ?, priority = ?, 
-      owner_dept_ids = ?, co_dept_ids = ?, 
+    UPDATE tasks SET
+      title = ?, content = ?, deadline = ?, priority = ?,
+      owner_dept_ids = ?, co_dept_ids = ?,
       dept_requirements = ?, co_dept_requirements = ?,
-      status = ?
+      status = ?, task_type = ?,
+      source = ?, tags = ?, handler_name = ?, is_key_task = ?
     WHERE id = ?
   `;
-  
+
   const params = [
     payload.title ?? '',
     payload.content ?? '',
@@ -79,6 +86,11 @@ async function updateTask(id: string, payload: any) {
     payload.dept_requirements ?? '{}',
     payload.co_dept_requirements ?? '{}',
     payload.status ?? 'PENDING',
+    payload.task_type ?? '常规',
+    payload.source ?? 'OTHER',
+    JSON.stringify(payload.tags || []),
+    payload.handler_name ?? '',
+    payload.is_key_task ? 1 : 0,
     id
   ];
 
@@ -151,10 +163,11 @@ async function completeTask(id: string) {
   }
 
   async function addLeaderComment(data: any) {
-  const sql = `INSERT OR REPLACE INTO leader_comments (id, task_id, leader_name, content, attachments, created_at) VALUES (?, ?, ?, ?, ?, ?)`;
-    const params = [uuidv4(), data.taskId, data.leaderName, data.content, JSON.stringify(data.attachments), new Date().toISOString()];
+  const sql = `INSERT OR REPLACE INTO leader_comments (id, task_id, leader_name, content, attachments, created_at, highlighted) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+    const params = [uuidv4(), data.taskId, data.leaderName, data.content, JSON.stringify(data.attachments), new Date().toISOString(), 1];
     dbManager.execute(sql, params);
     await dbManager.persist();
+    eventBus.emit('leader-comment-added', data);
   }
 
   function getTaskFeedbacks(taskId: string) {
@@ -165,6 +178,58 @@ async function completeTask(id: string) {
     return dbManager.query("SELECT * FROM leader_comments WHERE task_id = ? ORDER BY created_at DESC", [taskId]);
   }
 
-  return { tasks, fetchTasks, createTask, updateTask, deleteTask, addFeedback, addLeaderComment, getTaskFeedbacks, getTaskComments,getGlobalLatestLogs, // 必须返回
-    getDeptStats, getOverdueCount, completeTask };
+  // --- 6. 关注管理 ---
+  async function addWatch(taskId: string, userId: string) {
+    dbManager.execute('INSERT OR REPLACE INTO task_watches (id, task_id, user_id) VALUES (?, ?, ?)', [uuidv4(), taskId, userId]);
+    await dbManager.persist();
+  }
+
+  async function removeWatch(taskId: string, userId: string) {
+    dbManager.execute('DELETE FROM task_watches WHERE task_id = ? AND user_id = ?', [taskId, userId]);
+    await dbManager.persist();
+  }
+
+  function getWatchedTaskIds(userId: string): string[] {
+    return dbManager.query<{ task_id: string }>('SELECT task_id FROM task_watches WHERE user_id = ?', [userId]).map(r => r.task_id);
+  }
+
+  // --- 7. 子任务 ---
+  function getSubtasks(parentId: string): SupervisionTask[] {
+    return dbManager.query<any>("SELECT * FROM tasks WHERE parent_id = ? AND is_history = 0 ORDER BY created_at ASC", [parentId])
+      .map(t => ({ ...t, owner_dept_ids: JSON.parse(t.owner_dept_ids || '[]'), co_dept_ids: JSON.parse(t.co_dept_ids || '[]'), tags: safeParseJSON(t.tags, []) }));
+  }
+
+  function getSubtaskSummary(parentId: string) {
+    const subs = getSubtasks(parentId);
+    const now = new Date().toISOString().split('T')[0];
+    const completed = subs.filter(s => s.status === 'COMPLETED').length;
+    const overdue = subs.filter(s => s.status !== 'COMPLETED' && s.deadline && s.deadline < now).length;
+    return { total: subs.length, completed, inProgress: subs.length - completed, overdue };
+  }
+
+  // --- 8. 批示已阅 ---
+  async function markInstructionRead(instructionId: string, userId: string) {
+    dbManager.execute('INSERT OR REPLACE INTO leader_instruction_reads (id, instruction_id, user_id) VALUES (?, ?, ?)', [uuidv4(), instructionId, userId]);
+    await dbManager.persist();
+  }
+
+  function getUnreadInstructionIds(userId: string): string[] {
+    const all = dbManager.query<{ id: string }>('SELECT id FROM leader_comments');
+    const read = dbManager.query<{ instruction_id: string }>('SELECT instruction_id FROM leader_instruction_reads WHERE user_id = ?', [userId]);
+    const readIds = new Set(read.map(r => r.instruction_id));
+    return all.filter(c => !readIds.has(c.id)).map(c => c.id);
+  }
+
+  function isInstructionRead(instructionId: string, userId: string): boolean {
+    const r = dbManager.query<{ count: number }>('SELECT count(*) as count FROM leader_instruction_reads WHERE instruction_id = ? AND user_id = ?', [instructionId, userId]);
+    return (r[0]?.count || 0) > 0;
+  }
+
+  return { tasks, fetchTasks, createTask, updateTask, deleteTask, addFeedback, addLeaderComment, getTaskFeedbacks, getTaskComments,getGlobalLatestLogs, getDeptStats, getOverdueCount, completeTask, addWatch, removeWatch, getWatchedTaskIds, getSubtasks, getSubtaskSummary, markInstructionRead, getUnreadInstructionIds, isInstructionRead };
 });
+
+function safeParseJSON(str: any, defaultVal: any): any {
+  if (!str) return defaultVal;
+  if (typeof str !== 'string') return str;
+  try { return JSON.parse(str); } catch { return defaultVal; }
+}
