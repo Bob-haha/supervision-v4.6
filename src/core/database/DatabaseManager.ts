@@ -1,5 +1,6 @@
 import initSqlJs from 'sql.js';
 import type { Database, SqlJsStatic } from 'sql.js';
+import { wasmBase64 } from './wasmData';
 
 // 定义 P2P 广播回调类型
 type ExecuteCallback = (sql: string, params: any[]) => void;
@@ -35,29 +36,70 @@ export class DatabaseManager {
   public async init(): Promise<Database> {
     if (this.db) return this.db;
 
+    console.log("[DB] 开始初始化数据库...");
+
     try {
-      // 1. 初始化 SQL.js 引擎 (加载 WASM)
-      this.SQL = await initSqlJs({
-        locateFile: (file) => `/sqljs/${file}`
+      // 1. 初始化 SQL.js 引擎 (使用内联的 WASM 数据)
+      console.log("[DB] 正在加载 SQL.js WASM 引擎...");
+      // 将 base64 解码为 ArrayBuffer
+      const wasmBinary = Uint8Array.from(atob(wasmBase64), c => c.charCodeAt(0)).buffer;
+      
+      const sqlPromise = initSqlJs({
+        wasmBinary: wasmBinary
+      });
+      
+      // 设置 30 秒超时
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("SQL.js WASM 加载超时")), 30000);
       });
 
-      // 2. 从 IndexedDB 加载上一次保存的数据库二进制数据
-      const buffer = await this.loadFromIndexedDB();
+      this.SQL = await Promise.race([sqlPromise, timeoutPromise]);
+      console.log("[DB] SQL.js WASM 引擎加载成功");
+
+      // 2. 从 IndexedDB 加载上一次保存的数据库二进制数据 - 添加超时机制
+      console.log("[DB] 正在从 IndexedDB 恢复数据...");
+      const loadPromise = this.loadFromIndexedDB();
+      const loadTimeoutPromise = new Promise<ArrayBuffer | null>((resolve) => {
+        setTimeout(() => {
+          console.warn("[DB] IndexedDB 读取超时，将创建新数据库");
+          resolve(null);
+        }, 10000);
+      });
+
+      const buffer = await Promise.race([loadPromise, loadTimeoutPromise]);
 
       if (buffer) {
-        this.db = new this.SQL.Database(new Uint8Array(buffer));
-        console.log("已从本地存储恢复数据库");
+        try {
+          this.db = new this.SQL.Database(new Uint8Array(buffer));
+          console.log("[DB] 已从本地存储恢复数据库");
+        } catch (e) {
+          console.warn("[DB] 本地存储数据损坏，将创建新数据库:", e);
+          this.db = new this.SQL.Database();
+        }
       } else {
         this.db = new this.SQL.Database();
-        console.log("创建全新数据库实例");
+        console.log("[DB] 创建全新数据库实例");
       }
 
       // 3. 执行初始化表结构和迁移逻辑
+      console.log("[DB] 正在初始化表结构...");
       await this.initializeSchema();
 
+      console.log("[DB] 数据库初始化完成");
       return this.db;
     } catch (error) {
-      console.error("数据库初始化关键错误:", error);
+      console.error("[DB] 数据库初始化关键错误:", error);
+      // 如果初始化失败，尝试创建一个新的空数据库作为后备方案
+      try {
+        if (this.SQL) {
+          this.db = new this.SQL.Database();
+          await this.initializeSchema();
+          console.warn("[DB] 已使用后备方案创建新数据库");
+          return this.db;
+        }
+      } catch (e) {
+        console.error("[DB] 后备方案也失败:", e);
+      }
       throw error;
     }
   }

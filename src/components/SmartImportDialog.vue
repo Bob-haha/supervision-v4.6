@@ -34,19 +34,19 @@
 
         <el-table :data="editableItems" border size="small" max-height="350">
           <el-table-column prop="title" label="事项标题" min-width="180">
-            <template #default="{ row, $index }">
+            <template #default="{ $index }">
               <el-input v-model="editableItems[$index].title" size="small" />
             </template>
           </el-table-column>
           <el-table-column prop="department" label="责任部门" width="160">
-            <template #default="{ row, $index }">
+            <template #default="{ $index }">
               <el-select v-model="editableItems[$index].department" size="small" filterable clearable>
                 <el-option v-for="(name, id) in DEPT_MAP" :key="id" :label="name" :value="id" />
               </el-select>
             </template>
           </el-table-column>
           <el-table-column prop="deadline" label="办结时限" width="140">
-            <template #default="{ row, $index }">
+            <template #default="{ $index }">
               <el-date-picker
                 v-model="editableItems[$index].deadline"
                 type="date"

@@ -41,7 +41,6 @@ onMounted(async () => {
   await taskStore.fetchTasks();
   const stats = statisticsStore.getGuanquStats();
   const all = taskStore.tasks;
-  const now = new Date().toISOString().split('T')[0];
   const activeCount = all.filter(t => t.status !== 'COMPLETED').length;
   const deptStats = statisticsStore.getDepartmentStats();
   const highLoadDepts = deptStats.filter(d => d.loadLevel === 'HIGH').length;

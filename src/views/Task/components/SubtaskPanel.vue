@@ -81,7 +81,7 @@ function getStatusType(t: any) {
   return '';
 }
 
-function viewSubtask(task: any) {
+function viewSubtask(_task: any) {
   emit('createSubtask', props.taskId);
 }
 

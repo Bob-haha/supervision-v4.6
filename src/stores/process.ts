@@ -80,7 +80,7 @@ export const useProcessStore = defineStore('process', () => {
     await dbManager.persist();
   }
 
-  async function reorderNodes(templateId: string, nodeIds: string[]) {
+  async function reorderNodes(_templateId: string, nodeIds: string[]) {
     for (let i = 0; i < nodeIds.length; i++) {
       dbManager.run('UPDATE process_nodes SET sort_order = ? WHERE id = ?', [i + 1, nodeIds[i]]);
     }
@@ -161,7 +161,7 @@ export const useProcessStore = defineStore('process', () => {
     await dbManager.persist();
   }
 
-  async function reorderTaskNodes(taskId: string, nodeIds: string[]) {
+  async function reorderTaskNodes(_taskId: string, nodeIds: string[]) {
     for (let i = 0; i < nodeIds.length; i++) {
       dbManager.run('UPDATE task_process_nodes SET sort_order = ? WHERE id = ?', [i + 1, nodeIds[i]]);
     }

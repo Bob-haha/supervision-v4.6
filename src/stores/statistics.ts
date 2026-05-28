@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
 import type { GuanquStats, DeptStats, PersonalStats, TaskTypeField, TaskFieldValue } from '@/types';
 import { DatabaseManager } from '@/core/database/DatabaseManager';
 import { DEPT_MAP } from '@/constants';

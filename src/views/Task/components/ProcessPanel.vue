@@ -94,7 +94,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, reactive } from 'vue';
 import { useProcessStore } from '@/stores/process';
-import { CircleCheck, Loading, FolderAdd } from '@element-plus/icons-vue';
+import { CircleCheck, Loading } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 const props = defineProps<{ taskId: string }>();
