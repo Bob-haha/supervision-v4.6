@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新沙海关工作任务全周期管理系统 · 开发方案 V1.0</title>
+    <style>
+        :root {
+            --primary: #1a3550;
+            --primary-light: #264a6e;
+            --accent: #b8860b;
+            --accent-light: #d4a017;
+            --danger: #a51c30;
+            --bg: #fafaf7;
+            --card-bg: #ffffff;
+            --border: #d5d0c8;
+            --border-light: #e5e0d8;
+            --text: #1a1a1a;
+            --text-secondary: #5c564f;
+            --text-muted: #8a847c;
+            --code-bg: #f4f1ec;
+            --table-stripe: #fafaf7;
+            --table-header: #f0ede8;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+            --shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            --radius: 4px;
+            --radius-sm: 2px;
+            font-size: 15px;
+            scroll-behavior: smooth;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "STSong", "SimSun", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", "Segoe UI", serif;
+            background: #f3f0eb;
+            color: var(--text);
+            line-height: 1.7;
+            letter-spacing: 0.02em;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ========== 侧边目录导航 ========== */
+        .toc-sidebar {
+            width: 280px;
+            min-width: 280px;
+            background: var(--primary);
+            color: rgba(255, 255, 255, 0.88);
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            overflow-y: auto;
+            padding: 20px 0;
+            box-shadow: 2px 0 16px rgba(0, 0, 0, 0.15);
+            letter-spacing: 0.03em;
+        }
+        .toc-sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .toc-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        .toc-sidebar .toc-title {
+            padding: 0 22px 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toc-sidebar .toc-title .icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .toc-sidebar .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .toc-sidebar .toc-list li a {
+            display: block;
+            padding: 7px 22px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 0.82rem;
+            transition: all 0.15s ease;
+            border-left: 2px solid transparent;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .toc-sidebar .toc-list li a:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border-left-color: var(--accent);
+        }
+        .toc-sidebar .toc-list li a.toc-h2 {
+            font-weight: 600;
+            font-size: 0.88rem;
+            padding-top: 10px;
+            padding-bottom: 5px;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 0.04em;
+        }
+        .toc-sidebar .toc-list li a.toc-h3 {
+            padding-left: 34px;
+            font-size: 0.78rem;
+        }
+        .toc-sidebar .toc-list li a.toc-h4 {
+            padding-left: 46px;
+            font-size: 0.74rem;
+            color: rgba(255, 255, 255, 0.55);
+        }
+        .toc-sidebar .toc-list li a.toc-h4:hover {
+            color: rgba(255, 255, 255, 0.85);
+        }
+        .toc-sidebar .toc-badge {
+            display: inline-block;
+            font-size: 0.6rem;
+            padding: 1px 6px;
+            border-radius: 10px;
+            background: var(--accent);
+            color: #fff;
+            margin-left: 4px;
+            vertical-align: middle;
+            letter-spacing: 0.04em;
+        }
+
+        /* ========== 主内容区 ========== */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px 36px;
+            max-width: 1100px;
+            min-height: 100vh;
+        }
+        .doc-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .doc-header {
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 18px;
+            margin-bottom: 24px;
+        }
+        .doc-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: 0.04em;
+            margin-bottom: 6px;
+        }
+        .doc-header .meta {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            letter-spacing: 0.03em;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .doc-header .meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 28px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-light);
+            letter-spacing: 0.04em;
+        }
+        h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-light);
+            margin-top: 22px;
+            margin-bottom: 10px;
+            letter-spacing: 0.03em;
+        }
+        h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-top: 16px;
+            margin-bottom: 8px;
+            letter-spacing: 0.03em;
+        }
+        p {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        strong {
+            color: var(--primary);
+        }
+
+        /* ========== 表格 ========== */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 16px;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-sm);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            letter-spacing: 0.02em;
+            min-width: 700px;
+        }
+        table th {
+            background: var(--table-header);
+            font-weight: 700;
+            color: var(--primary);
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 2px solid var(--border);
+            white-space: nowrap;
+            font-size: 0.8rem;
+            letter-spacing: 0.03em;
+        }
+        table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: top;
+        }
+        table tr:nth-child(even) td {
+            background: var(--table-stripe);
+        }
+        table tr:hover td {
+            background: #fdfcf8;
+        }
+        table td:first-child {
+            font-weight: 500;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        /* ========== 代码块 ========== */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-sm);
+            padding: 14px 16px;
+            overflow-x: auto;
+            font-family: "SF Mono", "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 0.78rem;
+            line-height: 1.55;
+            letter-spacing: 0.01em;
+            margin-bottom: 14px;
+            color: #2d2d2d;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        code {
+            background: var(--code-bg);
+            padding: 1px 5px;
+            border-radius: 2px;
+            font-family: "SF Mono", "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.01em;
+            color: #3d3d3d;
+            border: 1px solid #e0dcd4;
+        }
+        pre code {
+            background: none;
+            padding: 0;
+            border: none;
+            font-size: inherit;
+            color: inherit;
+        }
+
+        /* ========== 分隔线 ========== */
+        .section-divider {
+            border: none;
+            border-top: 1px dashed var(--border);
+            margin: 24px 0;
+        }
+
+        /* ========== 标签 ========== */
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-right: 3px;
+            letter-spacing: 0.02em;
+            vertical-align: middle;
+        }
+        .tag-blue {
+            background: #e3edf5;
+            color: #1a5a8a;
+            border: 1px solid #c5d9e8;
+        }
+        .tag-green {
+            background: #e8f5e9;
+            color: #2d6a3f;
+            border: 1px solid #c8e6c9;
+        }
+        .tag-yellow {
+            background: #fff7e6;
+            color: #b85c00;
+            border: 1px solid #fdd9a0;
+        }
+        .tag-red {
+            background: #fde8e8;
+            color: #a51c30;
+            border: 1px solid #f5c6c6;
+        }
+
+        /* ========== 引用块 ========== */
+        .info-block {
+            background: #f8f6f1;
+            border-left: 3px solid var(--accent);
+            padding: 12px 16px;
+            margin-bottom: 14px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            font-size: 0.85rem;
+            letter-spacing: 0.02em;
+            line-height: 1.6;
+        }
+        .info-block strong {
+            color: var(--primary);
+        }
+
+        /* ========== 列表 ========== */
+        ul,
+        ol {
+            margin-left: 20px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+        ul li,
+        ol li {
+            margin-bottom: 3px;
+        }
+        ol.step-list {
+            list-style-type: none;
+            counter-reset: step-counter;
+            margin-left: 0;
+        }
+        ol.step-list li {
+            counter-increment: step-counter;
+            margin-bottom: 8px;
+            padding-left: 28px;
+            position: relative;
+            font-size: 0.88rem;
+        }
+        ol.step-list li::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 900px) {
+            .toc-sidebar {
+                width: 220px;
+                min-width: 220px;
+            }
+            .main-content {
+                margin-left: 220px;
+                padding: 20px 16px;
+            }
+            .doc-card {
+                padding: 18px 16px;
+            }
+            table {
+                font-size: 0.72rem;
+            }
+            pre {
+                font-size: 0.7rem;
+                padding: 10px 12px;
+            }
+        }
+        @media (max-width: 640px) {
+            .toc-sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 14px 10px;
+            }
+            h1 {
+                font-size: 1.2rem;
+            }
+            h2 {
+                font-size: 1rem;
+            }
+            .doc-card {
+                padding: 14px 12px;
+            }
+        }
+
+        /* 打印样式 */
+        @media print {
+            .toc-sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 0;
+                max-width: 100%;
+            }
+            .doc-card {
+                box-shadow: none;
+                border: 1px solid #ccc;
+                page-break-inside: avoid;
+            }
+            body {
+                background: #fff;
+            }
+            pre {
+                white-space: pre-wrap;
+                word-break: break-all;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 侧边目录导航 ==================== -->
+    <nav class="toc-sidebar" id="tocSidebar">
+        <div class="toc-title">
+            <span class="icon">关</span> 开发方案目录
+        </div>
+        <ul class="toc-list">
+            <li><a href="#sec-1" class="toc-h2">一、系统开发目标</a></li>
+            <li><a href="#sec-1-1" class="toc-h3">1.1 总体目标</a></li>
+            <li><a href="#sec-1-2" class="toc-h3">1.2 核心能力目标</a></li>
+            <li><a href="#sec-1-3" class="toc-h3">1.3 系统组成</a></li>
+            <li><a href="#sec-2" class="toc-h2">二、开发小组人员组成与分工</a></li>
+            <li><a href="#sec-2-1" class="toc-h3">2.1 人员构成</a></li>
+            <li><a href="#sec-2-2" class="toc-h3">2.2 角色与职责</a></li>
+            <li><a href="#sec-2-3" class="toc-h3">2.3 协作模式</a></li>
+            <li><a href="#sec-3" class="toc-h2">三、系统开发分工</a></li>
+            <li><a href="#sec-3-1" class="toc-h3">3.1 模块划分与代码库</a></li>
+            <li><a href="#sec-3-2" class="toc-h3">3.2 Vue应用模块分工</a></li>
+            <li><a href="#sec-3-3" class="toc-h3">3.3 浏览器扩展模块分工</a></li>
+            <li><a href="#sec-3-4" class="toc-h3">3.4 信令服务器模块分工</a></li>
+            <li><a href="#sec-4" class="toc-h2">四、系统开发步骤</a></li>
+            <li><a href="#sec-4-1" class="toc-h3">4.1 总体阶段划分</a></li>
+            <li><a href="#sec-4-2" class="toc-h4">4.2 第0阶段：基础搭建</a></li>
+            <li><a href="#sec-4-3" class="toc-h4">4.3 第1阶段：核心数据层</a></li>
+            <li><a href="#sec-4-4" class="toc-h4">4.4 第2阶段：任务全周期</a></li>
+            <li><a href="#sec-4-5" class="toc-h4">4.5 第3阶段：态势与配置</a></li>
+            <li><a href="#sec-4-6" class="toc-h4">4.6 第4阶段：扩展增强</a></li>
+            <li><a href="#sec-4-7" class="toc-h4">4.7 第5阶段：测试与部署</a></li>
+            <li><a href="#sec-5" class="toc-h2">五、关键技术约定</a></li>
+            <li><a href="#sec-6" class="toc-h2">六、风险与应对</a></li>
+        </ul>
+    </nav>
+
+    <!-- ==================== 主内容区 ==================== -->
+    <div class="main-content">
+        <div class="doc-card">
+            <!-- 文档头部 -->
+            <div class="doc-header">
+                <h1>新沙海关工作任务全周期管理系统<br>开发方案</h1>
+                <div class="meta">
+                    <span>📌 版本：1.0</span>
+                    <span>👤 编制：刘朔</span>
+                    <span>📅 日期：2026-05-28</span>
+                </div>
+            </div>
+
+            <!-- 配套说明 -->
+            <div class="info-block">
+                <strong>📎 配套说明：</strong>本开发方案与《完整数据模型与流转设计文档（V3.0）》配套使用，共同构成新沙海关工作任务全周期管理系统的完整开发指导文件。开发组全体成员应以此为依据，按照阶段划分和模块分工推进工作。
+            </div>
+
+            <!-- ==================== 一、系统开发目标 ==================== -->
+            <h2 id="sec-1">一、系统开发目标</h2>
+
+            <h3 id="sec-1-1">1.1 总体目标</h3>
+            <p>构建一个面向新沙海关全体工作人员的<strong>纯前端、免安装、P2P加密同步</strong>的工作任务全周期管理系统。系统定位为关区行政运行的"任务总线"和"个人工作台"，将"文""事""数"有机串联，弥补现有公文系统和业务系统之间的管理留白，首次实现隶属海关层级→科室层级→个人层级的三级管理穿透。</p>
+
+            <h3 id="sec-1-2">1.2 核心能力目标</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>能力</th><th>目标描述</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>通用任务模型</strong></td><td>所有工作事项纳入统一的任务表单，支持从简单待办到复杂项目的自然生长</td></tr>
+                        <tr><td><strong>灵活流程配置</strong></td><td>管理员或经办人可自定义任务环节序列，保存为常设流程模板供复用</td></tr>
+                        <tr><td><strong>任务树分解</strong></td><td>支持多级子任务分解，父子任务数据可按规则汇总</td></tr>
+                        <tr><td><strong>责任矩阵透明</strong></td><td>主办/协办部门及人员清晰可见，支持直接分派与逐级下派</td></tr>
+                        <tr><td><strong>环节式智能推进</strong></td><td>每个环节提供选项卡按钮控制流程走向，附带模板下载、制度依据、外部链接</td></tr>
+                        <tr><td><strong>全视角督办</strong></td><td>多维度组合筛选、自动黄红灯预警、办结率/逾期率自动统计</td></tr>
+                        <tr><td><strong>跨系统数据联动</strong></td><td>通过浏览器扩展实现邮件/公文手动提取生成任务、外部系统表单状态自动监控回写</td></tr>
+                        <tr><td><strong>态势数据聚合</strong></td><td>从任务明细字段自动汇总关级/科级数据指标，支持个性化配置和多标签页视图</td></tr>
+                        <tr><td><strong>P2P安全同步</strong></td><td>任务数据在授权范围内通过P2P加密同步，不经过中心服务器，满足安全保密要求</td></tr>
+                        <tr><td><strong>离线可用</strong></td><td>所有数据存储在浏览器IndexedDB中，完全离线可用</td></tr>
+                        <tr><td><strong>轻量免安装</strong></td><td>系统打包后体积控制在数MB级别，浏览器打开即用</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 id="sec-1-3">1.3 系统组成</h3>
+            <p>系统由三部分构成：</p>
+            <ol>
+                <li><strong>Vue浏览器应用</strong>：任务管理主界面，包含首页看板、任务详情、流程配置、文件管理等全部前端页面。</li>
+                <li><strong>浏览器扩展</strong>：隐形助手，负责内容脚本注入、后台定时任务、跨系统数据抓取与回写。</li>
+                <li><strong>Node.js信令服务器</strong>：P2P网络协调，负责peer发现、消息转发、状态广播，不存储任何业务数据。</li>
+            </ol>
+
+            <hr class="section-divider">
+
+            <!-- ==================== 二、开发小组人员组成与分工 ==================== -->
+            <h2 id="sec-2">二、开发小组人员组成与分工</h2>
+
+            <h3 id="sec-2-1">2.1 人员构成</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>姓名</th><th>专业背景</th><th>开发经验</th><th>使用工具</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>刘朔</td><td>财务专业</td><td>通过AI配合开发过多个应用，有项目管理和需求分析经验</td><td>DeepSeek网页版 + Trae</td></tr>
+                        <tr><td>李彦鸿</td><td>计算机专业</td><td>有独立开发经验，技术能力最强</td><td>Trae</td></tr>
+                        <tr><td>苏奕宇</td><td>非计算机专业</td><td>无独立开发经验，将通过AI辅助工具参与开发</td><td>Trae</td></tr>
+                        <tr><td>帅韬</td><td>非计算机专业</td><td>无独立开发经验，将通过AI辅助工具参与开发</td><td>Trae</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 id="sec-2-2">2.2 角色与职责</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>角色</th><th>人员</th><th>核心职责</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>需求与架构负责人</strong></td>
+                            <td>刘朔</td>
+                            <td>对接业务部门需求，完成功能设计和数据模型定义；制定系统架构、模块划分及通信协议；审核各模块代码产出；控制整体开发进度，组织验收测试；编写开发规格书供AI和开发人员使用</td>
+                        </tr>
+                        <tr>
+                            <td><strong>技术负责人兼开发统筹</strong></td>
+                            <td>李彦鸿</td>
+                            <td>负责浏览器扩展、信令服务器增强及核心底层模块开发；指导苏奕宇、帅韬使用Trae进行开发，审查其代码产出；搭建测试环境，进行联调测试；处理疑难技术问题，把控代码质量和性能</td>
+                        </tr>
+                        <tr>
+                            <td><strong>应用模块开发者</strong></td>
+                            <td>苏奕宇</td>
+                            <td>在刘朔提供的页面原型和数据结构基础上，使用Trae开发Vue组件；负责首页看板（态势展示、多标签页）、任务列表、流程配置页、明细模板配置页、字段管理页、类型与标签配置页、态势配置页、督办看板、组织架构管理（部门部分）</td>
+                        </tr>
+                        <tr>
+                            <td><strong>应用模块开发者</strong></td>
+                            <td>帅韬</td>
+                            <td>在刘朔提供的页面原型和数据结构基础上，使用Trae开发Vue组件；负责任务详情页、新建任务页、个人工作台、文件管理页、组织架构管理（人员部分）、提取配置面板、批量送阅、数据行权限交互</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 id="sec-2-3">2.3 协作模式</h3>
+            <p>采用<strong>"一人定义，AI生成，交叉审查"</strong>的协作模式：</p>
+            <ol class="step-list">
+                <li><strong>需求定义（刘朔）</strong>：将功能的数据结构、组件接口、交互逻辑用自然语言详细描述，形成"开发规格书"，可直接供AI使用。</li>
+                <li><strong>代码生成（执行者）</strong>：苏奕宇、帅韬或李彦鸿将规格书输入Trae，生成初始代码。</li>
+                <li><strong>代码审查（交叉进行）</strong>：苏奕宇、帅韬的代码先自行测试，随后提交给李彦鸿进行初步审查。关键模块和架构相关代码由刘朔审查。重点检查：数据结构正确性、异常处理、与现有代码的兼容性。</li>
+                <li><strong>联调测试（李彦鸿）</strong>：搭建联调环境，将各模块代码集成，进行端到端测试。</li>
+                <li><strong>进度把控（刘朔）</strong>：每周核对进度，发现问题及时调整任务优先级。</li>
+                <li><strong>最终验收（刘朔）</strong>：对照需求规格书进行功能验收，确认交付。</li>
+            </ol>
+
+            <hr class="section-divider">
+
+            <!-- ==================== 三、系统开发分工 ==================== -->
+            <h2 id="sec-3">三、系统开发分工</h2>
+
+            <h3 id="sec-3-1">3.1 模块划分与代码库</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>代码库</th><th>说明</th><th>主要负责人</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>task-system-vue</code></td><td>Vue 3 + TypeScript + Vite 前端应用</td><td>苏奕宇、帅韬（页面开发），刘朔（架构与核心逻辑）</td></tr>
+                        <tr><td><code>task-system-extension</code></td><td>Chrome浏览器扩展</td><td>李彦鸿</td></tr>
+                        <tr><td><code>task-system-signal</code></td><td>Node.js信令服务器</td><td>李彦鸿（已有基础，需增强）</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 id="sec-3-2">3.2 Vue应用模块分工</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>模块</th><th>包含页面/组件</th><th>责任人</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>首页看板</strong></td><td>关区态势、科级态势、个人工作台（四个标签页）、态势多标签页管理、列选/筛选/排序配置、态势卡片穿透</td><td>苏奕宇</td></tr>
+                        <tr><td><strong>任务列表</strong></td><td>我的任务列表、批量送阅、搜索筛选</td><td>苏奕宇</td></tr>
+                        <tr><td><strong>任务详情页</strong></td><td>任务头栏、责任矩阵、环节流程、子任务区、动态与批示区、数据明细区、负责人确认反馈、关联已有任务、提取配置面板</td><td>帅韬</td></tr>
+                        <tr><td><strong>新建任务页</strong></td><td>任务创建表单、类型级联选择、责任分配、子任务预分配、流程/明细模板挂载</td><td>帅韬</td></tr>
+                        <tr><td><strong>个人工作台</strong></td><td>待办/关注/我发起的/送阅/我的提取任务五个标签页</td><td>帅韬</td></tr>
+                        <tr><td><strong>流程配置页</strong></td><td>流程模板管理、环节编辑、选项配置、资源引用（从文件库选择）</td><td>苏奕宇</td></tr>
+                        <tr><td><strong>明细模板配置页</strong></td><td>明细模板管理、字段选择与排序</td><td>苏奕宇</td></tr>
+                        <tr><td><strong>字段管理页</strong></td><td>系统字段库维护、聚合属性设置</td><td>苏奕宇</td></tr>
+                        <tr><td><strong>类型与标签配置页</strong></td><td>二级分类管理、标签组管理、Excel导入导出</td><td>苏奕宇</td></tr>
+                        <tr><td><strong>组织架构管理页</strong></td><td>部门管理（树形结构、拖拽排序）、人员管理（列表、表单）</td><td>苏奕宇（部门）、帅韬（人员）</td></tr>
+                        <tr><td><strong>文件管理页</strong></td><td>文件上传、分类查看、版本管理、条款目录编辑、统一替换、搜索</td><td>帅韬</td></tr>
+                        <tr><td><strong>态势配置页</strong></td><td>指标定义管理、聚合规则配置、可见角色设置</td><td>苏奕宇</td></tr>
+                        <tr><td><strong>督办看板</strong></td><td>高级筛选与汇总、组合条件过滤、统计图表、导出报表</td><td>苏奕宇</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 id="sec-3-3">3.3 浏览器扩展模块分工</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>模块</th><th>功能</th><th>责任人</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>Service Worker</strong></td><td>后台任务调度、定时器管理、消息中转、跨域请求</td><td>李彦鸿</td></tr>
+                        <tr><td><strong>Content Scripts</strong></td><td>页面DOM解析、数据提取、DOM监听、可视化选择器</td><td>李彦鸿</td></tr>
+                        <tr><td><strong>通信协议</strong></td><td>与Vue应用的<code>postMessage</code>/<code>chrome.runtime</code>通信、数据格式定义</td><td>李彦鸿</td></tr>
+                        <tr><td><strong>提取执行器</strong></td><td>手动提取触发、自动监控轮询、状态回写</td><td>李彦鸿</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 id="sec-3-4">3.4 信令服务器模块分工</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>模块</th><th>功能</th><th>责任人</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>P2P协调</strong></td><td>peer发现、连接建立、NAT穿透</td><td>李彦鸿（已有）</td></tr>
+                        <tr><td><strong>订阅管理</strong></td><td>任务-用户订阅关系维护、定向消息转发</td><td>李彦鸿（增强）</td></tr>
+                        <tr><td><strong>状态广播</strong></td><td>任务更新事件广播、提取结果通知</td><td>李彦鸿（增强）</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- ==================== 四、系统开发步骤 ==================== -->
+            <h2 id="sec-4">四、系统开发步骤</h2>
+
+            <h3 id="sec-4-1">4.1 总体阶段划分</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>阶段</th><th>名称</th><th>时间建议</th><th>目标</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>第0阶段</td><td>基础搭建与环境准备</td><td>第1-2周</td><td>确认技术栈、搭建项目骨架、建立协作流程</td></tr>
+                        <tr><td>第1阶段</td><td>核心数据层与基础功能</td><td>第3-5周</td><td>完成数据模型实现、基础CRUD、P2P同步改造</td></tr>
+                        <tr><td>第2阶段</td><td>任务全周期核心功能</td><td>第6-10周</td><td>任务详情页重构、流程引擎、子任务、浏览器扩展基础功能</td></tr>
+                        <tr><td>第3阶段</td><td>态势、配置与协同</td><td>第11-14周</td><td>态势看板、流程/明细/类型配置、文件管理、长链条协同</td></tr>
+                        <tr><td>第4阶段</td><td>扩展增强与督办</td><td>第15-17周</td><td>浏览器扩展完整功能、督办看板、提取工作台</td></tr>
+                        <tr><td>第5阶段</td><td>测试、优化与部署</td><td>第18-20周</td><td>全面测试、性能优化、文档完善、试点部署</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 id="sec-4-2">4.2 第0阶段：基础搭建与环境准备（第1-2周）</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>任务</th><th>责任人</th><th>输出物</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Vue 3 + Vite + TypeScript项目初始化，集成Dexie.js</td><td>刘朔 + 李彦鸿</td><td>项目骨架Git仓库</td></tr>
+                        <tr><td>Chrome扩展骨架搭建（manifest、Service Worker、Content Scripts通信验证）</td><td>李彦鸿</td><td>扩展最小可行骨架</td></tr>
+                        <tr><td>Node.js信令服务器代码审查与增强计划</td><td>李彦鸿</td><td>信令服务器现状报告</td></tr>
+                        <tr><td>IndexedDB数据库初始化脚本、Dexie.js schema定义</td><td>刘朔（定义）+ 李彦鸿（实现）</td><td>数据库初始化模块</td></tr>
+                        <tr><td>Git分支策略、代码审查流程、周会制度建立</td><td>刘朔</td><td>协作规范文档</td></tr>
+                        <tr><td>苏奕宇、帅韬上手培训：用Trae完成一个简单页面的完整开发流程</td><td>刘朔</td><td>培训完成，两人可独立使用AI辅助开发</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 id="sec-4-3">4.3 第1阶段：核心数据层与基础功能（第3-5周）</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>任务</th><th>责任人</th><th>输出物</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>部门表、人员表CRUD实现，组织架构管理页（含Excel导入导出）</td><td>苏奕宇（部门）、帅韬（人员）</td><td>组织架构管理功能</td></tr>
+                        <tr><td>任务表基础CRUD实现（创建、查询、更新、删除）</td><td>帅韬</td><td>任务基础接口</td></tr>
+                        <tr><td>P2P同步机制改造：全量同步→任务级定向同步，<code>authorizedPeers</code>维护</td><td>李彦鸿</td><td>定向同步功能</td></tr>
+                        <tr><td>信令服务器订阅管理功能</td><td>李彦鸿</td><td>订阅机制</td></tr>
+                        <tr><td>新建任务页（基础版：标题、描述、时限、责任分配、标签）</td><td>帅韬</td><td>可创建简单任务</td></tr>
+                        <tr><td>我的任务列表（基础版：展示、筛选）</td><td>苏奕宇</td><td>任务列表页</td></tr>
+                        <tr><td>IndexedDB数据模型全部表结构创建脚本</td><td>李彦鸿</td><td>完整数据库schema</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 id="sec-4-4">4.4 第2阶段：任务全周期核心功能（第6-10周）</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>任务</th><th>责任人</th><th>输出物</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>任务详情页完整功能：责任矩阵展示与编辑、动态区反馈、子任务区域、关联已有任务</td><td>帅韬</td><td>任务详情页</td></tr>
+                        <tr><td>流程模板表CRUD、流程配置页</td><td>苏奕宇</td><td>流程配置功能</td></tr>
+                        <tr><td>环节引擎：流程挂载、环节快照、选项卡推进、环节流转记录</td><td>帅韬 + 刘朔（引擎逻辑）</td><td>流程执行功能</td></tr>
+                        <tr><td>明细模板表CRUD、系统字段库CRUD、明细模板配置页、字段管理页</td><td>苏奕宇</td><td>明细配置功能</td></tr>
+                        <tr><td>任务详情页数据明细区：动态表单渲染、数据行增删改、行级权限控制</td><td>帅韬</td><td>数据明细功能</td></tr>
+                        <tr><td>父子任务数据汇总（同构汇总、异构汇总）</td><td>帅韬（前端）+ 李彦鸿（底层查询）</td><td>数据汇总功能</td></tr>
+                        <tr><td>负责人确认反馈机制</td><td>帅韬</td><td>反馈确认功能</td></tr>
+                        <tr><td>文件表CRUD、文件上传/下载（Blob存储）</td><td>帅韬</td><td>文件基础功能</td></tr>
+                        <tr><td>浏览器扩展：手动提取邮件/公文生成任务</td><td>李彦鸿</td><td>手动提取功能</td></tr>
+                        <tr><td>个人工作台基础版（待办、关注、我发起的）</td><td>帅韬</td><td>个人工作台</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 id="sec-4-5">4.5 第3阶段：态势、配置与协同（第11-14周）</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>任务</th><th>责任人</th><th>输出物</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>首页看板：关区态势、科级态势、态势指标定义表CRUD、态势配置页</td><td>苏奕宇</td><td>态势看板</td></tr>
+                        <tr><td>态势多标签页、列选/筛选/排序配置持久化</td><td>苏奕宇</td><td>多标签页功能</td></tr>
+                        <tr><td>任务类型二级分类配置、标签组管理、Excel导入导出</td><td>苏奕宇</td><td>分类配置功能</td></tr>
+                        <tr><td>文件管理页完整功能：分类查看、版本管理、条款目录编辑、统一替换</td><td>帅韬</td><td>文件管理功能</td></tr>
+                        <tr><td>制度文件条款导航与pdf.js页码跳转</td><td>帅韬 + 李彦鸿（pdf.js集成）</td><td>制度预览功能</td></tr>
+                        <tr><td>长链条协同：<code>task_relations</code>扩展、数据快照、引用关联、溯源</td><td>李彦鸿（底层）+ 帅韬（交互）</td><td>跨部门协同功能</td></tr>
+                        <tr><td>个人工作台完善：送阅任务、批量送阅、提取任务列表</td><td>帅韬</td><td>个人工作台完善</td></tr>
+                        <tr><td>领导批示功能：动态区批示输入、高亮展示、首页置顶</td><td>帅韬</td><td>批示功能</td></tr>
+                        <tr><td>浏览器扩展：自动监控回写状态（定时轮询、DOM变化检测）</td><td>李彦鸿</td><td>自动监控功能</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 id="sec-4-6">4.6 第4阶段：扩展增强与督办（第15-17周）</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>任务</th><th>责任人</th><th>输出物</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>浏览器扩展：提取配置面板、可视化DOM选择器</td><td>李彦鸿（扩展）+ 帅韬（配置面板UI）</td><td>提取配置功能</td></tr>
+                        <tr><td>浏览器扩展：个人提取工作台（登录状态、一键登录、手动/自动提取）</td><td>李彦鸿（扩展）+ 帅韬（工作台UI）</td><td>提取工作台</td></tr>
+                        <tr><td>督办看板：高级筛选与汇总、组合条件过滤、统计图表、导出报表</td><td>苏奕宇</td><td>督办看板</td></tr>
+                        <tr><td>用户角色表实现、督办员权限扩展</td><td>李彦鸿</td><td>权限增强</td></tr>
+                        <tr><td>任务黄红灯预警（临期/逾期判断）</td><td>苏奕宇</td><td>预警功能</td></tr>
+                        <tr><td>数据态势卡片穿透查看</td><td>苏奕宇</td><td>穿透功能</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 id="sec-4-7">4.7 第5阶段：测试、优化与部署（第18-20周）</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>任务</th><th>责任人</th><th>输出物</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>全功能端到端测试</td><td>全员</td><td>测试报告</td></tr>
+                        <tr><td>性能优化（IndexedDB查询、P2P同步效率、大文件处理）</td><td>李彦鸿</td><td>性能优化报告</td></tr>
+                        <tr><td>兼容性测试（奇安信浏览器、国产操作系统）</td><td>李彦鸿 + 刘朔</td><td>兼容性报告</td></tr>
+                        <tr><td>用户手册编写</td><td>刘朔</td><td>用户手册</td></tr>
+                        <tr><td>试点科室部署与反馈收集</td><td>刘朔</td><td>反馈汇总</td></tr>
+                        <tr><td>Bug修复与迭代</td><td>全员</td><td>稳定版本</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- ==================== 五、关键技术约定 ==================== -->
+            <h2 id="sec-5">五、关键技术约定</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>约定项</th><th>约定内容</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>前端框架</strong></td><td>Vue 3 + TypeScript + Vite</td></tr>
+                        <tr><td><strong>数据库</strong></td><td>IndexedDB（Dexie.js封装）</td></tr>
+                        <tr><td><strong>P2P通信</strong></td><td>PeerJS + 自建Node.js信令服务器</td></tr>
+                        <tr><td><strong>浏览器扩展</strong></td><td>Chrome Extension Manifest V3</td></tr>
+                        <tr><td><strong>文件预览</strong></td><td>mammoth.js（Word转HTML）+ 浏览器打印PDF + pdf.js渲染</td></tr>
+                        <tr><td><strong>文件存储</strong></td><td>IndexedDB Blob直接存储</td></tr>
+                        <tr><td><strong>Excel处理</strong></td><td>xlsx库前端解析</td></tr>
+                        <tr><td><strong>代码管理</strong></td><td>Git，每人独立分支，合并前交叉审查</td></tr>
+                        <tr><td><strong>AI辅助工具</strong></td><td>Trae（代码生成），DeepSeek（需求分析与规格书编写）</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- ==================== 六、风险与应对 ==================== -->
+            <h2 id="sec-6">六、风险与应对</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>风险</th><th>应对措施</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>AI生成代码质量不可控</td><td>严格执行"生成者自测 + 交叉审查"两道关卡</td></tr>
+                        <tr><td>浏览器扩展开发经验不足</td><td>李彦鸿先搭建最小可行骨架验证技术可行性</td></tr>
+                        <tr><td>多人操作IndexedDB并发问题</td><td>刘朔在数据模型设计阶段明确事务规则</td></tr>
+                        <tr><td>新人上手初期效率低</td><td>李彦鸿一对一指导，初期任务集中在小范围可快速验证的页面</td></tr>
+                        <tr><td>P2P同步稳定性</td><td>信令服务器增加心跳检测和断线重连机制</td></tr>
+                        <tr><td>国产浏览器兼容性</td><td>第1阶段起即在奇安信浏览器上进行持续测试</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <hr class="section-divider">
+
+            <!-- 结尾说明 -->
+            <div class="info-block" style="margin-top:24px;">
+                <strong>📌 文档结束</strong><br>
+                本开发方案与《完整数据模型与流转设计文档（V3.0）》配套使用，共同构成新沙海关工作任务全周期管理系统的完整开发指导文件。开发组全体成员应以此为依据，按照阶段划分和模块分工推进工作。
+            </div>
+
+        </div><!-- /doc-card -->
+    </div><!-- /main-content -->
+
+</body>
+</html>

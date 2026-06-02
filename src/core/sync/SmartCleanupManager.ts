@@ -269,13 +269,15 @@ export class SmartCleanupManager {
   }
 
   async getSoftDeletedRecordCount(): Promise<number> {
-    let total = 0;
-    const tables = ['tasks', 'feedbacks', 'leader_comments'];
+    let total = 0
+    const tables = ['tasks', 'feedbacks', 'leader_comments']
     for (const table of tables) {
-      const result = this.db.query<{ count: number }>(
-        `SELECT COUNT(*) as count FROM ${table} WHERE is_deleted = 1`,
-      );
-      total += result[0]?.count || 0;
+      try {
+        const result = this.db.query<{ count: number }>(
+          `SELECT COUNT(*) as count FROM ${table} WHERE is_deleted = 1`,
+        )
+        total += result[0]?.count || 0
+      } catch (_) { /* is_deleted 列可能不存在 */ }
     }
     return total;
   }

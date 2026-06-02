@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新沙海关任务管理系统 - 完整数据模型与流转设计文档（最终版 V3.0）</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --border: #e0e4e8;
+            --accent: #1a73e8;
+            --accent-light: #e8f0fe;
+            --tag-new: #d93025;
+            --tag-new-bg: #fce8e6;
+            --tag-updated: #e37400;
+            --tag-updated-bg: #fef7e0;
+            --code-bg: #f1f3f4;
+            --heading-color: #1a1a2e;
+            --toc-bg: #fafbfc;
+            --toc-border: #dde1e6;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --radius: 8px;
+            --radius-sm: 4px;
+            --transition: 0.2s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.75;
+            font-size: 15px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px 20px 60px;
+        }
+
+        /* 顶部标题卡片 */
+        .doc-header {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 32px 36px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+        }
+        .doc-header .version-badge {
+            display: inline-block;
+            background: var(--accent);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+        .doc-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--heading-color);
+            margin-bottom: 10px;
+            letter-spacing: -0.3px;
+        }
+        .doc-header .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+        .doc-header .meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .doc-header .meta .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #c4c9d0;
+            display: inline-block;
+        }
+
+        /* 更新说明横幅 */
+        .update-banner {
+            background: #fffdf5;
+            border: 1px solid #f0d87c;
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            margin-bottom: 28px;
+            font-size: 13.5px;
+            color: #5c4a00;
+            line-height: 1.6;
+        }
+        .update-banner strong {
+            color: #b06000;
+        }
+        .update-banner .badge-new {
+            display: inline-block;
+            background: #d93025;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-right: 4px;
+            vertical-align: 1px;
+        }
+
+        /* 目录 */
+        .toc {
+            background: var(--toc-bg);
+            border: 1px solid var(--toc-border);
+            border-radius: var(--radius);
+            padding: 24px 28px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow-sm);
+        }
+        .toc h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--heading-color);
+            margin-bottom: 16px;
+            letter-spacing: -0.2px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .toc ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .toc>ul>li {
+            margin-bottom: 6px;
+        }
+        .toc>ul>li>a {
+            font-weight: 600;
+            font-size: 14.5px;
+            color: var(--accent);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .toc>ul>li>a:hover {
+            color: #1557b0;
+            text-decoration: underline;
+        }
+        .toc ul ul {
+            margin-left: 18px;
+            margin-top: 2px;
+        }
+        .toc ul ul li {
+            margin-bottom: 2px;
+            font-size: 13.5px;
+        }
+        .toc ul ul li a {
+            color: #4a6d8c;
+            text-decoration: none;
+            font-weight: 400;
+            transition: var(--transition);
+        }
+        .toc ul ul li a:hover {
+            color: #1a73e8;
+            text-decoration: underline;
+        }
+        .toc .toc-part {
+            font-weight: 700;
+            color: #333;
+            font-size: 14px;
+            margin-top: 8px;
+            display: block;
+        }
+
+        /* 内容区 */
+        .content-section {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 28px 32px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+        .content-section h2 {
+            font-size: 21px;
+            font-weight: 700;
+            color: var(--heading-color);
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e8ecf0;
+            letter-spacing: -0.2px;
+        }
+        .content-section h3 {
+            font-size: 17px;
+            font-weight: 650;
+            color: #1a1a2e;
+            margin-top: 22px;
+            margin-bottom: 10px;
+        }
+        .content-section h4 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-top: 16px;
+            margin-bottom: 8px;
+        }
+        .content-section p {
+            margin-bottom: 10px;
+        }
+
+        /* 标记样式 */
+        .mark-new {
+            background: var(--tag-new-bg);
+            color: var(--tag-new);
+            font-weight: 700;
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            margin-left: 4px;
+            vertical-align: 2px;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+        .mark-updated {
+            background: var(--tag-updated-bg);
+            color: var(--tag-updated);
+            font-weight: 700;
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            margin-left: 4px;
+            vertical-align: 2px;
+            white-space: nowrap;
+            letter-spacing: 0.3px;
+        }
+        .highlight-row {
+            background: #fffdf5 !important;
+            border-left: 3px solid #f0c040 !important;
+            padding-left: 12px !important;
+        }
+
+        /* 表格 */
+        .table-wrapper {
+            overflow-x: auto;
+            margin: 14px 0;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+            min-width: 700px;
+        }
+        table thead {
+            background: #f5f6f8;
+        }
+        table thead th {
+            font-weight: 650;
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 2px solid #dde1e6;
+            font-size: 13px;
+            color: #444;
+            white-space: nowrap;
+            letter-spacing: 0.2px;
+        }
+        table tbody td {
+            padding: 9px 12px;
+            border-bottom: 1px solid #eef0f3;
+            vertical-align: top;
+            color: #3a3f47;
+        }
+        table tbody tr:hover {
+            background: #fafcfd;
+        }
+        table tbody tr.row-new {
+            background: #fffdf5;
+            border-left: 3px solid #f0c040;
+        }
+        table tbody tr.row-new td:first-child {
+            padding-left: 9px;
+        }
+
+        /* 代码块 */
+        pre {
+            background: #1e1e2e;
+            color: #cdd6f4;
+            font-family: "SF Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace;
+            font-size: 12.5px;
+            line-height: 1.55;
+            padding: 16px 18px;
+            border-radius: var(--radius-sm);
+            overflow-x: auto;
+            margin: 12px 0;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        code.inline {
+            background: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+            font-family: "SF Mono", "Fira Code", "Consolas", "Monaco", "Courier New", monospace;
+            color: #c7254e;
+            word-break: break-all;
+        }
+        pre.json-code {
+            background: #fafbfc;
+            color: #2c3e50;
+            border: 1px solid #e0e4e8;
+            font-size: 12.5px;
+        }
+
+        /* 引用块 */
+        blockquote {
+            border-left: 4px solid #1a73e8;
+            background: #f8faff;
+            margin: 14px 0;
+            padding: 12px 16px;
+            border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+            font-size: 14px;
+            color: #334455;
+        }
+        blockquote.warning {
+            border-left-color: #e37400;
+            background: #fffdf5;
+        }
+
+        /* 分隔线 */
+        hr {
+            border: none;
+            border-top: 1px solid #e8ecf0;
+            margin: 24px 0;
+        }
+
+        /* 决策表格 */
+        .decision-table td:first-child {
+            font-weight: 600;
+            white-space: nowrap;
+            color: #1a1a2e;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px 10px 40px;
+            }
+            .doc-header {
+                padding: 20px 18px;
+            }
+            .doc-header h1 {
+                font-size: 20px;
+            }
+            .content-section {
+                padding: 18px 14px;
+            }
+            .toc {
+                padding: 16px 14px;
+            }
+            table {
+                font-size: 12px;
+                min-width: 500px;
+            }
+            pre {
+                font-size: 11px;
+                padding: 10px 12px;
+            }
+        }
+
+        /* 打印 */
+        @media print {
+            body {
+                background: #fff;
+                font-size: 12px;
+                line-height: 1.5;
+            }
+            .container {
+                max-width: 100%;
+                padding: 0;
+            }
+            .content-section,
+            .doc-header,
+            .toc {
+                box-shadow: none;
+                border: 1px solid #ccc;
+                break-inside: avoid;
+            }
+            .toc {
+                page-break-after: always;
+            }
+        }
+
+        /* 平滑滚动 */
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 20px;
+        }
+
+        /* 回到顶部 */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            z-index: 999;
+        }
+        .back-to-top.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .back-to-top:hover {
+            background: #1557b0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- ========== 文档头部 ========== -->
+        <header class="doc-header" id="top">
+            <span class="version-badge">📌 版本 3.0</span>
+            <h1>新沙海关任务管理系统<br>完整数据模型与流转设计文档（最终版 V3.0）</h1>
+            <div class="meta">
+                <span>👤 编制：系统架构师</span>
+                <span class="dot"></span>
+                <span>📅 日期：2026-05-28</span>
+                <span class="dot"></span>
+                <span>🔴 含 V3.0 增量更新</span>
+            </div>
+        </header>
+
+        <!-- ========== V3.0 更新说明横幅 ========== -->
+        <div class="update-banner" id="update-summary">
+            <strong>📢 本次版本更新说明（V3.0 新增需求）</strong><br>
+            本版本在 V2.0 基础上，整合了以下新增需求和设计决策：
+            <ul style="margin:6px 0 0 16px; padding:0;">
+                <li><strong>首页态势多标签页与高级配置</strong>：关级、科级态势支持创建多个独立标签页，每个标签页可独立配置列选、筛选、排序。用户配置持久化存储，下次登录自动恢复。</li>
+                <li><strong>任务反馈负责人确认机制</strong>：子任务完成和环节推进产生的汇总信息，需经本级任务负责人确认后，才能作为本级任务的正式反馈内容对外展示。</li>
+                <li><strong>批量送阅</strong>：任务列表支持多选后一键批量送阅给指定人员。</li>
+                <li><strong>P2P同步细粒度权限</strong>：任务仅创建人可删除。数据明细行仅创建人可删除和编辑本人创建的行，他人创建的行只读。</li>
+                <li><strong>长链条多部门协同解耦设计</strong>：通过"数据快照 + 引用关联 + 状态通知"机制，支持预算申报→采购申请→采购实施等跨部门长链条场景，各部门任务独立运作、数据解耦。</li>
+                <li><strong>Word文档预览方案确定</strong>：采用 mammoth.js + pdf.js 纯前端方案，支持制度文件页码跳转。</li>
+            </ul>
+            <div style="margin-top:8px;">
+                <span class="badge-new">新增</span> <strong>V3.0 增量更新</strong>（已整合至正文）：
+                <code class="inline">tasks</code> 表新增 <code class="inline">starredBy</code>、<code class="inline">activityLog</code> 字段；
+                <code class="inline">metric_definitions.config</code> 结构调整；
+                <code class="inline">user_dashboard_config</code> 指标拆分；
+                流转模拟步骤增强。
+            </div>
+        </div>
+
+        <!-- ========== 目录 ========== -->
+        <nav class="toc" id="toc">
+            <h2>📑 目录</h2>
+            <ul>
+                <li><a href="#doc-structure">文档结构说明</a></li>
+                <li><span class="toc-part">第一部分：数据模型定义</span>
+                    <ul>
+                        <li><a href="#sec-1-1">1.1 组织架构模块</a>
+                            <ul>
+                                <li><a href="#sec-1-1-1">1.1.1 部门表 departments</a></li>
+                                <li><a href="#sec-1-1-2">1.1.2 人员表 personnel</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#sec-1-2">1.2 任务核心模块</a>
+                            <ul>
+                                <li><a href="#sec-1-2-1">1.2.1 任务表 tasks</a> <span class="mark-new">更新</span></li>
+                                <li><a href="#sec-1-2-2">1.2.2 任务关联表 task_relations</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#sec-1-3">1.3 流程与明细配置模块</a>
+                            <ul>
+                                <li><a href="#sec-1-3-1">1.3.1 流程模板表 flow_templates</a></li>
+                                <li><a href="#sec-1-3-2">1.3.2 系统字段库 system_fields</a></li>
+                                <li><a href="#sec-1-3-3">1.3.3 动态明细模板表 data_sheet_templates</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#sec-1-4">1.4 分类与标签模块</a></li>
+                        <li><a href="#sec-1-5">1.5 文件管理模块</a></li>
+                        <li><a href="#sec-1-6">1.6 态势与用户配置模块</a>
+                            <ul>
+                                <li><a href="#sec-1-6-1">1.6.1 态势指标定义表 metric_definitions</a> <span class="mark-updated">调整</span></li>
+                                <li><a href="#sec-1-6-2">1.6.2 用户看板配置 user_dashboard_config</a> <span class="mark-updated">调整</span></li>
+                            </ul>
+                        </li>
+                        <li><a href="#sec-1-7">1.7 用户角色表 user_roles</a></li>
+                    </ul>
+                </li>
+                <li><a href="#sec-2">第二部分：前端模块与表单对应关系</a></li>
+                <li><span class="toc-part">第三部分：数据流转模拟</span>
+                    <ul>
+                        <li><a href="#sec-3-1">步骤1：系统初始化与数据准备</a></li>
+                        <li><a href="#sec-3-2">步骤2：任务创建与分派</a> <span class="mark-new">更新</span></li>
+                        <li><a href="#sec-3-3">步骤3：子任务分解与关联已有任务</a></li>
+                        <li><a href="#sec-3-4">步骤4：任务办理与反馈确认</a></li>
+                        <li><a href="#sec-3-5">步骤5：浏览器扩展提取外部数据</a></li>
+                        <li><a href="#sec-3-6">步骤6：长链条跨部门协同</a></li>
+                        <li><a href="#sec-3-7">步骤7：批量送阅</a></li>
+                        <li><a href="#sec-3-8">步骤8：领导查阅与批示</a> <span class="mark-new">更新</span></li>
+                        <li><a href="#sec-3-9">步骤9：首页态势多标签页配置</a> <span class="mark-new">更新</span></li>
+                        <li><a href="#sec-3-10">步骤10：数据行权限控制</a> <span class="mark-new">更新</span></li>
+                    </ul>
+                </li>
+                <li><a href="#sec-4">第四部分：关键设计决策说明</a></li>
+            </ul>
+        </nav>
+
+        <!-- ========== 文档结构说明 ========== -->
+        <section class="content-section" id="doc-structure">
+            <h2>文档结构说明</h2>
+            <p>本文档分为<strong>四大部分</strong>：</p>
+            <ul>
+                <li><strong>第一部分：数据模型定义</strong>。按模块列出所有 IndexedDB 表结构、字段、关联关系。</li>
+                <li><strong>第二部分：前端模块与表单对应关系</strong>。明确每个表由哪个页面使用、由哪位开发者负责。</li>
+                <li><strong>第三部分：数据流转模拟</strong>。用完整业务场景串联所有表，展示数据如何产生、流转、驱动。</li>
+                <li><strong>第四部分：关键设计决策说明</strong>。对技术选型和架构决策给出最终裁定。</li>
+            </ul>
+            <blockquote>
+                📌 <strong>技术约定</strong>：所有表均在 IndexedDB 中实现，使用 Dexie.js 操作。主键统一使用 UUID，时间字段使用 ISO 8601 格式字符串。
+            </blockquote>
+        </section>
+
+        <!-- ========== 第一部分 ========== -->
+        <section class="content-section" id="sec-1">
+            <h2>第一部分：数据模型定义</h2>
+
+            <!-- 1.1 组织架构模块 -->
+            <h3 id="sec-1-1">1.1 组织架构模块</h3>
+
+            <!-- 1.1.1 -->
+            <h4 id="sec-1-1-1">1.1.1 部门表 departments</h4>
+            <p><strong>功能</strong>：存储关区所有科室、处室信息，构建组织树。支撑任务分派时部门选择、P2P定向同步时部门领导路由、态势按部门筛选。</p>
+            <p><strong>使用页面</strong>：组织架构管理页、任务表单责任分配选择器、态势筛选。</p>
+            <p><strong>责任人</strong>：小苏（管理页）、帅韬（选择器组件）、李彦鸿（P2P同步路由）。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID，部门唯一标识</td></tr>
+                        <tr><td>name</td><td>string</td><td>是</td><td>部门全称（如"查验二科"）</td></tr>
+                        <tr><td>shortName</td><td>string</td><td>否</td><td>部门简称（如"查验二"）</td></tr>
+                        <tr><td>parentId</td><td>string</td><td>否</td><td>上级部门ID，为空表示一级部门，用于构建部门树</td></tr>
+                        <tr><td>leaderId</td><td>string</td><td>否</td><td>部门负责人ID，关联 <code class="inline">personnel.id</code>。任务分配到部门时，通过此字段找到默认接收人</td></tr>
+                        <tr><td>order</td><td>number</td><td>是</td><td>排序号，控制同级部门显示顺序</td></tr>
+                        <tr><td>isActive</td><td>boolean</td><td>是</td><td>是否启用，false时不在选择器和态势筛选中显示，但历史任务中的引用保留</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p><strong>关联与驱动</strong>：</p>
+            <ul>
+                <li><code class="inline">leaderId → personnel.id</code>：P2P同步时，系统查询任务主办部门对应的leaderId，将任务推送到该领导的设备。</li>
+                <li><code class="inline">parentId → departments.id</code>：构建部门树，支撑态势按层级汇总。</li>
+            </ul>
+
+            <!-- 1.1.2 -->
+            <h4 id="sec-1-1-2">1.1.2 人员表 personnel</h4>
+            <p><strong>功能</strong>：存储所有用户的基本信息、职务、所属部门。支撑任务分派时人员选择、P2P身份识别、权限判断。</p>
+            <p><strong>使用页面</strong>：组织架构管理页、人员选择器、P2P连接身份映射、权限校验。</p>
+            <p><strong>责任人</strong>：帅韬（管理页、选择器）、李彦鸿（与P2P peerId绑定）。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID，同时作为P2P网络中的peerId，客户端连接信令服务器时以此标识身份</td></tr>
+                        <tr><td>name</td><td>string</td><td>是</td><td>姓名</td></tr>
+                        <tr><td>employeeNo</td><td>string</td><td>是</td><td>工号，唯一，用于Excel导入时的去重匹配</td></tr>
+                        <tr><td>departmentId</td><td>string</td><td>是</td><td>所属主部门ID，关联 <code class="inline">departments.id</code>。用于确定用户所属科室，支撑态势科室过滤</td></tr>
+                        <tr><td>position</td><td>string</td><td>是</td><td>职务（科长/副科长/科员/关长/副关长/督办员/财务人员/后勤人员等），用于前端展示和未来角色权限判断</td></tr>
+                        <tr><td>isLeader</td><td>boolean</td><td>是</td><td>是否为其主部门的负责人。P2P同步时，任务分配到部门后，系统查询isLeader=true的人员作为默认接收人</td></tr>
+                        <tr><td>email</td><td>string</td><td>否</td><td>邮箱，用于浏览器扩展手动提取邮件时的发件人匹配</td></tr>
+                        <tr><td>isActive</td><td>boolean</td><td>是</td><td>是否在职，离职人员不在选择器中显示</td></tr>
+                        <tr><td>order</td><td>number</td><td>是</td><td>排序号</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p><strong>关联与驱动</strong>：</p>
+            <ul>
+                <li><code class="inline">id</code> 即 P2P peerId。用户打开系统时，浏览器扩展或Vue应用将此ID注册到信令服务器。</li>
+                <li><code class="inline">departmentId → departments.id</code>：确定用户所属科室。</li>
+                <li><code class="inline">isLeader</code>：决定是否为部门的默认任务接收人。</li>
+            </ul>
+
+            <!-- 1.2 任务核心模块 -->
+            <h3 id="sec-1-2">1.2 任务核心模块</h3>
+
+            <!-- 1.2.1 -->
+            <h4 id="sec-1-2-1">1.2.1 任务表 tasks <span class="mark-new">🔴 更新</span></h4>
+            <p><strong>功能</strong>：存储每个工作任务的完整信息，是整个系统的核心数据载体。所有业务操作最终都体现为对此表某条记录的创建或更新。</p>
+            <p><strong>使用页面</strong>：首页看板、个人工作台、任务列表、任务详情页、新建任务页、督办看板。</p>
+            <p><strong>责任人</strong>：帅韬（详情页、新建页）、小苏（看板、列表）、李彦鸿（P2P同步、扩展联动）。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID，任务唯一标识</td></tr>
+                        <tr><td>title</td><td>string</td><td>是</td><td>任务标题，用于列表展示和搜索</td></tr>
+                        <tr><td>description</td><td>string</td><td>否</td><td>详细描述，富文本</td></tr>
+                        <tr><td>taskTypeGroupId</td><td>string</td><td>否</td><td>一级任务类型ID，关联 <code class="inline">task_type_groups.id</code>。用于分类筛选</td></tr>
+                        <tr><td>taskTypeId</td><td>string</td><td>否</td><td>二级任务类型ID，关联 <code class="inline">task_types.id</code>。创建时系统通过此字段自动挂载默认流程模板和明细模板</td></tr>
+                        <tr><td>status</td><td>enum</td><td>是</td><td>任务状态：<code class="inline">pending</code>（待处理）、<code class="inline">in_progress</code>（进行中）、<code class="inline">completed</code>（已完成）、<code class="inline">archived</code>（已归档）</td></tr>
+                        <tr><td>priority</td><td>enum</td><td>是</td><td>紧急程度：<code class="inline">normal</code>（普通）、<code class="inline">urgent</code>（紧急）、<code class="inline">leadership_attention</code>（领导关注）。标记为leadership_attention的任务在首页态势和关注列表中置顶</td></tr>
+                        <tr><td>deadline</td><td>string</td><td>否</td><td>截止日期，ISO 8601格式。用于临期/逾期判断（黄灯/红灯预警）</td></tr>
+                        <tr><td>tags</td><td>string[]</td><td>否</td><td>标签ID数组，关联 <code class="inline">tags.id</code>。支撑多标签筛选和督办分类汇总</td></tr>
+                        <tr><td>parentTaskId</td><td>string</td><td>否</td><td>父任务ID，为空表示顶级任务。建立父子关系时双向关联</td></tr>
+                        <tr><td>childTaskIds</td><td>string[]</td><td>是</td><td>子任务ID列表，由系统在创建子任务或关联已有任务时自动维护。用于快速查询任务树</td></tr>
+                        <tr><td>source</td><td>object</td><td>否</td><td>任务来源。结构：<code class="inline">{type: "manual"/"email"/"document", reference: "原文链接或文号"}</code>。浏览器扩展提取时自动填充</td></tr>
+                        <tr><td>responsibleMatrix</td><td>object</td><td>是</td><td>责任矩阵，记录主办部门/人员、协办部门/人员（结构见下方）</td></tr>
+                        <tr><td>flowTemplateId</td><td>string</td><td>否</td><td>创建时挂载的流程模板ID，关联 <code class="inline">flow_templates.id</code></td></tr>
+                        <tr><td>stagesSnapshot</td><td>array</td><td>否</td><td>环节快照数组，任务创建时从流程模板的stages拷贝而来。后续任务流转以此为准</td></tr>
+                        <tr><td>currentStageIndex</td><td>number</td><td>否</td><td>当前环节索引，指向stagesSnapshot数组中的某个元素。-1表示尚未开始或已结束</td></tr>
+                        <tr><td>confirmedFeedback</td><td>object</td><td>否</td><td>负责人已确认的反馈摘要。结构：<code class="inline">{summary, confirmedAt, confirmedBy}</code></td></tr>
+                        <tr><td>dataSheetTemplateId</td><td>string</td><td>否</td><td>明细模板ID，关联 <code class="inline">data_sheet_templates.id</code></td></tr>
+                        <tr><td>dataSheetFields</td><td>array</td><td>否</td><td>明细字段定义快照。结构：<code class="inline">[{fieldId, required, order}]</code></td></tr>
+                        <tr><td>dataSheetRows</td><td>array</td><td>否</td><td>明细数据行数组。每行结构：<code class="inline">{rowId, data: {fieldId: value}, creatorId, createdAt, updatedAt}</code></td></tr>
+                        <tr><td>childAggregationMode</td><td>enum</td><td>否</td><td>父子任务数据汇总模式：<code class="inline">none</code>（独立）、<code class="inline">homogeneous</code>（同构）、<code class="inline">heterogeneous</code>（异构）</td></tr>
+                        <tr><td>aggregationRules</td><td>array</td><td>否</td><td>异构汇总规则，结构：<code class="inline">[{sourceTaskId, sourceFieldId, targetSummaryId, aggFunction}]</code></td></tr>
+                        <tr><td>snapshots</td><td>array</td><td>否</td><td>关联上游任务的数据快照数组。用于长链条协同，冻结上游数据版本</td></tr>
+                        <tr><td>extractionConfig</td><td>object</td><td>否</td><td>浏览器扩展提取配置（结构见下方）</td></tr>
+                        <tr><td>authorizedPeers</td><td>string[]</td><td>是</td><td>有权访问此任务的peerId列表。P2P同步时仅向这些peer推送数据</td></tr>
+                        <tr><td>sharedWith</td><td>string[]</td><td>否</td><td>送阅目标peerId数组。这些peer可查看任务详情但非直接责任人</td></tr>
+                        <tr><td>createdBy</td><td>string</td><td>是</td><td>创建人peerId。用于删除权限判断：仅createdBy可删除整个任务</td></tr>
+                        <tr><td>createdAt</td><td>string</td><td>是</td><td>ISO 8601创建时间</td></tr>
+                        <tr><td>updatedAt</td><td>string</td><td>是</td><td>ISO 8601最后更新时间，用于P2P增量同步判断</td></tr>
+                        <!-- 🔴 新增字段 -->
+                        <tr class="row-new">
+                            <td><strong>starredBy</strong> <span class="mark-new">🔴 新增</span></td>
+                            <td>string[]</td>
+                            <td>否</td>
+                            <td>关注此任务的人员 peerId 数组。用于首页"关注任务"列表、任务详情页关注星标切换。默认空数组。</td>
+                        </tr>
+                        <tr class="row-new">
+                            <td><strong>activityLog</strong> <span class="mark-new">🔴 新增</span></td>
+                            <td>Array</td>
+                            <td>否</td>
+                            <td>任务动态记录数组，按时间顺序存储所有操作记录。每条记录为对象，结构见下方说明。默认空数组。</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p><strong>责任矩阵 responsibleMatrix 结构</strong>：</p>
+            <pre class="json-code">{
+                "primary": [
+                {"departmentId": "dept_01", "personnelId": "user_01", "role": "main"}
+                ],
+                "cooperative": [
+                {"departmentId": "dept_02", "personnelId": null, "role": "assist"}
+                ]
+        }</pre>
+            <p><code class="inline">personnelId</code>为空时表示任务到达部门但尚未指派到具体人，部门领导需要进一步细化分派。当personnelId被填充时，该人员的所有设备收到任务同步。</p>
+
+            <p><strong>环节快照 stagesSnapshot 结构</strong>：</p>
+            <pre class="json-code">[
+                {
+                "stageIndex": 0,
+                "name": "制定方案",
+                "options": [
+                {
+                "label": "提交科长审核",
+                "nextStageIndex": 1,
+                "resources": {
+                "templates": ["file_id_001"],
+                "links": ["http://..."],
+                "policies": [
+                {"fileId": "file_id_010", "clauseId": "clause_03",
+                "clauseTitle": "第三章 查验规程", "pageNumber": 15}
+                ]
+                }
+                }
+                ],
+                "requireAttachment": false,
+                "requireSupervisorConfirm": false
+                }
+        ]</pre>
+            <p><code class="inline">templates</code>中的文件ID指向files表中的模板文件。<code class="inline">policies</code>中的文件ID指向files表中的制度文件，<code class="inline">pageNumber</code>用于pdf.js页码跳转。</p>
+
+            <p><strong>提取配置 extractionConfig 结构</strong>：</p>
+            <pre class="json-code">{
+                "enabled": true,
+                "executorId": "user_05",
+                "targetUrl": "https://lims.customs.gov.cn/result/123",
+                "domMappings": [
+                {"fieldName": "labResult", "selector": "#result-status", "attribute": "textContent"}
+                ],
+                "schedule": {"mode": "auto", "intervalMinutes": 60},
+                "lastExtractionStatus": "success",
+                "lastExtractionTime": "2026-05-28T08:00:00Z"
+        }</pre>
+
+            <p><strong>🔴 activityLog 元素结构</strong> <span class="mark-new">新增</span>：</p>
+            <pre class="json-code">{
+                "id": "uuid",
+                "type": "stage_progress | feedback | attachment | subtask_summary | leader_comment | system | responsibility_feedback | external_notification | urge",
+                "content": "描述文本",
+                "timestamp": "ISO8601 时间",
+                "actorPeerId": "user_xxx",
+                "metadata": {
+                "oldStageIndex": 0,
+                "newStageIndex": 1,
+                "attachmentIds": [],
+                "urgeTargets": []
+                }
+        }</pre>
+            <p><strong>驱动说明</strong>：</p>
+            <ul>
+                <li>环节推进、反馈提交、领导批示、催办、外部系统回写等操作，均通过向 <code class="inline">activityLog</code> 追加记录实现。前端动态区按此数组渲染时间线。</li>
+                <li><code class="inline">starredBy</code> 更新时仅修改数组，不产生动态记录。</li>
+            </ul>
+
+            <!-- 1.2.2 -->
+            <h4 id="sec-1-2-2">1.2.2 任务关联表 task_relations</h4>
+            <p><strong>功能</strong>：独立存储任务之间的关联关系及数据汇总模式。解除关联时仅删除此记录，不影响任务本身。支持父子任务和长链条引用两种关联类型。</p>
+            <p><strong>使用页面</strong>：任务详情页子任务区域、数据明细汇总逻辑、长链条协同溯源。</p>
+            <p><strong>责任人</strong>：李彦鸿（底层CRUD）、帅韬（详情页展示）。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID</td></tr>
+                        <tr><td>parentTaskId</td><td>string</td><td>是</td><td>父任务ID，关联 <code class="inline">tasks.id</code></td></tr>
+                        <tr><td>childTaskId</td><td>string</td><td>是</td><td>子任务ID，关联 <code class="inline">tasks.id</code></td></tr>
+                        <tr><td>relationType</td><td>enum</td><td>是</td><td>关联类型：<code class="inline">parent_child</code>（父子任务）、<code class="inline">reference</code>（引用关系，用于长链条协同）</td></tr>
+                        <tr><td>aggregationMode</td><td>enum</td><td>是</td><td>汇总模式：<code class="inline">none</code>、<code class="inline">homogeneous</code>、<code class="inline">heterogeneous</code></td></tr>
+                        <tr><td>aggregationRules</td><td>array</td><td>否</td><td>异构汇总规则</td></tr>
+                        <tr><td>createdAt</td><td>string</td><td>是</td><td>关联建立时间</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>🔗 <strong>关联时的权限合并</strong>：建立关联时（无论何种类型），系统自动将父任务的authorizedPeers与子任务的authorizedPeers双向合并，确保双方相关人员都能看到完整上下文。</p>
+
+            <!-- 1.3 -->
+            <h3 id="sec-1-3">1.3 流程与明细配置模块</h3>
+
+            <h4 id="sec-1-3-1">1.3.1 流程模板表 flow_templates</h4>
+            <p><strong>功能</strong>：存储可复用的任务步骤序列及每个环节的操作配置。由管理员或科室负责人维护。</p>
+            <p><strong>使用页面</strong>：流程配置页、新建任务页（选择流程）。</p>
+            <p><strong>责任人</strong>：小苏。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID</td></tr>
+                        <tr><td>name</td><td>string</td><td>是</td><td>模板名称（如"年度重点任务流程"）</td></tr>
+                        <tr><td>stages</td><td>array</td><td>是</td><td>环节定义数组，结构同stagesSnapshot</td></tr>
+                        <tr><td>createdBy</td><td>string</td><td>是</td><td>创建人peerId</td></tr>
+                        <tr><td>isPublic</td><td>boolean</td><td>是</td><td>是否全关可见。false时仅创建人所在科室可见</td></tr>
+                        <tr><td>createdAt</td><td>string</td><td>是</td><td>创建时间</td></tr>
+                        <tr><td>updatedAt</td><td>string</td><td>是</td><td>最后更新时间</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <blockquote class="warning">⚠️ 注意事项：任务创建时会快照stages到任务的stagesSnapshot，后续模板修改不影响已创建的任务。环节中的文件引用（模板、制度）存储的是文件ID，指向files表。</blockquote>
+
+            <h4 id="sec-1-3-2">1.3.2 系统字段库 system_fields</h4>
+            <p><strong>功能</strong>：统一管理所有明细表字段的定义。所有任务类型的明细字段均从此库选取，保证跨任务类型可汇总。</p>
+            <p><strong>使用页面</strong>：字段管理页、明细模板配置页、态势指标配置页。</p>
+            <p><strong>责任人</strong>：小苏。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID</td></tr>
+                        <tr><td>name</td><td>string</td><td>是</td><td>字段显示名（如"预算金额"）</td></tr>
+                        <tr><td>type</td><td>enum</td><td>是</td><td>字段类型：<code class="inline">text</code>（文本）、<code class="inline">number</code>（数字）、<code class="inline">date</code>（日期）、<code class="inline">select</code>（下拉选项）</td></tr>
+                        <tr><td>options</td><td>array</td><td>否</td><td>当type为select时的选项列表</td></tr>
+                        <tr><td>unit</td><td>string</td><td>否</td><td>单位（如"万元"、"台"）</td></tr>
+                        <tr><td>isAggregatable</td><td>boolean</td><td>是</td><td>是否可聚合。number和date类型默认为true</td></tr>
+                        <tr><td>suggestedLevel</td><td>enum</td><td>否</td><td>建议指标级别：<code class="inline">customs_level</code>（关级）、<code class="inline">section_level</code>（科级）</td></tr>
+                        <tr><td>isSystem</td><td>boolean</td><td>是</td><td>是否系统内置字段，内置字段不可删除</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h4 id="sec-1-3-3">1.3.3 动态明细模板表 data_sheet_templates</h4>
+            <p><strong>功能</strong>：定义每种任务类型需要填报的结构化明细字段组合。创建任务时引用。</p>
+            <p><strong>使用页面</strong>：明细模板配置页、新建任务页（自动挂载）。</p>
+            <p><strong>责任人</strong>：小苏。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID</td></tr>
+                        <tr><td>name</td><td>string</td><td>是</td><td>模板名称（如"采购任务明细表"）</td></tr>
+                        <tr><td>fields</td><td>array</td><td>是</td><td>字段引用数组。每项结构：<code class="inline">{fieldId, required, order}</code>。关联 <code class="inline">system_fields.id</code></td></tr>
+                        <tr><td>defaultSort</td><td>string[]</td><td>否</td><td>默认显示的字段ID顺序</td></tr>
+                        <tr><td>createdAt</td><td>string</td><td>是</td><td>创建时间</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 1.4 -->
+            <h3 id="sec-1-4">1.4 分类与标签模块</h3>
+            <h4>1.4.1 任务类型一级分类 task_type_groups</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID</td></tr>
+                        <tr><td>name</td><td>string</td><td>是</td><td>分类名称（如"采购类"、"年度重点工作类"）</td></tr>
+                        <tr><td>order</td><td>number</td><td>是</td><td>排序号</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <h4>1.4.2 任务类型二级子项 task_types</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID</td></tr>
+                        <tr><td>groupId</td><td>string</td><td>是</td><td>所属一级分类ID，关联 <code class="inline">task_type_groups.id</code></td></tr>
+                        <tr><td>name</td><td>string</td><td>是</td><td>类型名称（如"设备采购"）</td></tr>
+                        <tr><td>defaultFlowTemplateId</td><td>string</td><td>否</td><td>默认流程模板ID，关联 <code class="inline">flow_templates.id</code></td></tr>
+                        <tr><td>defaultDataSheetTemplateId</td><td>string</td><td>否</td><td>默认明细模板ID，关联 <code class="inline">data_sheet_templates.id</code></td></tr>
+                        <tr><td>order</td><td>number</td><td>是</td><td>排序号</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p><strong>驱动方式</strong>：用户在新建任务时选择二级类型后，系统自动读取defaultFlowTemplateId和defaultDataSheetTemplateId，将对应的流程和明细结构快照到任务对象中。</p>
+
+            <h4>1.4.3 标签组 tag_groups 与标签 tags</h4>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>表</th><th>字段</th><th>类型</th><th>说明</th></tr></thead>
+                    <tbody>
+                        <tr><td>tag_groups</td><td>id</td><td>string</td><td>UUID</td></tr>
+                        <tr><td>tag_groups</td><td>name</td><td>string</td><td>组名（如"任务来源"）</td></tr>
+                        <tr><td>tag_groups</td><td>order</td><td>number</td><td>排序</td></tr>
+                        <tr><td>tags</td><td>id</td><td>string</td><td>UUID</td></tr>
+                        <tr><td>tags</td><td>groupId</td><td>string</td><td>所属组ID</td></tr>
+                        <tr><td>tags</td><td>name</td><td>string</td><td>标签名（如"安全生产"）</td></tr>
+                        <tr><td>tags</td><td>order</td><td>number</td><td>排序</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 1.5 -->
+            <h3 id="sec-1-5">1.5 文件管理模块</h3>
+            <h4>1.5.1 文件表 files</h4>
+            <p><strong>功能</strong>：集中存储所有模板文件、制度文件、任务附件。支持版本管理、条款目录、有效期、统一替换。制度文件存储条款目录用于pdf.js页码跳转。</p>
+            <p><strong>使用页面</strong>：文件管理页、流程配置页、任务详情页、个人工作台。</p>
+            <p><strong>责任人</strong>：帅韬（文件管理页、选择器）、李彦鸿（文件P2P同步逻辑）。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID，文件唯一标识</td></tr>
+                        <tr><td>name</td><td>string</td><td>是</td><td>原始文件名</td></tr>
+                        <tr><td>category</td><td>enum</td><td>是</td><td>文件分类：<code class="inline">template</code>（模板）、<code class="inline">policy</code>（制度）、<code class="inline">attachment</code>（附件）</td></tr>
+                        <tr><td>mimeType</td><td>string</td><td>是</td><td>MIME类型</td></tr>
+                        <tr><td>size</td><td>number</td><td>是</td><td>文件大小（字节）</td></tr>
+                        <tr><td>data</td><td>Blob</td><td>是</td><td>文件二进制数据，直接存储在IndexedDB中</td></tr>
+                        <tr><td>version</td><td>number</td><td>是</td><td>版本号，从1开始递增</td></tr>
+                        <tr><td>isLatest</td><td>boolean</td><td>是</td><td>是否最新版本</td></tr>
+                        <tr><td>replacesFileId</td><td>string</td><td>否</td><td>被替换的旧版本文件ID，形成版本链</td></tr>
+                        <tr><td>relatedTaskId</td><td>string</td><td>否</td><td>关联的任务ID（仅attachment时有效）</td></tr>
+                        <tr><td>uploadedBy</td><td>string</td><td>是</td><td>上传人peerId</td></tr>
+                        <tr><td>uploadedAt</td><td>string</td><td>是</td><td>上传时间</td></tr>
+                        <tr><td colspan="4"><strong>制度文件特有字段（仅 category=policy 时有效）</strong></td></tr>
+                        <tr><td>policyNumber</td><td>string</td><td>否</td><td>文号（如"署监发〔2025〕12号"）</td></tr>
+                        <tr><td>effectiveDate</td><td>string</td><td>否</td><td>生效日期</td></tr>
+                        <tr><td>expiryDate</td><td>string</td><td>否</td><td>失效日期</td></tr>
+                        <tr><td>clauses</td><td>array</td><td>否</td><td>条款目录数组，结构：<code class="inline">[{id, title, pageNumber, children: [...]}]</code></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>📄 <strong>Word文档预览</strong>：采用mammoth.js将.docx转为HTML，再通过浏览器打印为PDF，使用pdf.js渲染。制度文件的clauses中pageNumber字段用于pdf.js的页码跳转。</p>
+            <p>📦 <strong>同步策略</strong>：template和policy类文件全关同步（P2P广播）；attachment类文件仅同步给关联任务的authorizedPeers。</p>
+
+            <!-- 1.6 -->
+            <h3 id="sec-1-6">1.6 态势与用户配置模块</h3>
+
+            <h4 id="sec-1-6-1">1.6.1 态势指标定义表 metric_definitions <span class="mark-updated">🔴 调整</span></h4>
+            <p><strong>功能</strong>：定义首页态势卡片的数据来源和聚合方式。</p>
+            <p><strong>使用页面</strong>：管理后台态势配置页、首页看板。</p>
+            <p><strong>责任人</strong>：小苏。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+                    <tbody>
+                        <tr><td>id</td><td>string</td><td>是</td><td>UUID</td></tr>
+                        <tr><td>name</td><td>string</td><td>是</td><td>指标显示名</td></tr>
+                        <tr><td>level</td><td>enum</td><td>是</td><td>指标级别：<code class="inline">customs_level</code>（关级）、<code class="inline">section_level</code>（科级）</td></tr>
+                        <tr><td>isRecommended</td><td>boolean</td><td>是</td><td>是否为管理员推荐指标</td></tr>
+                        <tr><td>config</td><td>object</td><td>是</td><td><span class="mark-updated">🔴 结构调整</span>。聚合配置，根据筛选模式不同包含不同子字段。结构如下：</td></tr>
+                        <tr><td>visibility</td><td>string</td><td>是</td><td>可见角色：<code class="inline">all</code>、<code class="inline">role:leader</code>、<code class="inline">role:section_chief</code>、<code class="inline">role:inspector</code></td></tr>
+                        <tr><td>isSystem</td><td>boolean</td><td>是</td><td>是否系统内置指标</td></tr>
+                        <tr><td>order</td><td>number</td><td>是</td><td>排序号</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p><strong>🔴 config 结构（调整后）</strong> <span class="mark-updated">调整</span>：</p>
+            <pre class="json-code">{
+                "mode": "filter" | "specific",
+
+                // 当 mode = "filter" 时使用以下字段：
+                "taskTypeIds": ["type_annual"],
+                "filterTags": ["tag_leader"],
+                "timeRange": {"start": "2026-01-01", "end": "2026-12-31"},
+
+                // 当 mode = "specific" 时使用以下字段：
+                "specificTaskIds": ["task_001", "task_002"],
+
+                // 聚合定义（两种模式共用）：
+                "fieldId": "sys_field_budget",
+                "aggFunc": "SUM"
+        }</pre>
+            <p><strong>说明</strong>：</p>
+            <ul>
+                <li><code class="inline">mode</code> 为必选项，确定使用"条件筛选"还是"指定具体任务"。</li>
+                <li>条件筛选模式下，可组合 <code class="inline">taskTypeIds</code>、<code class="inline">filterTags</code>、<code class="inline">timeRange</code>，至少提供一个条件。</li>
+                <li>具体任务模式下，<code class="inline">specificTaskIds</code> 至少包含一个任务 ID。</li>
+                <li>聚合字段 <code class="inline">fieldId</code> 和函数 <code class="inline">aggFunc</code> 为两种模式共用，若 <code class="inline">fieldId = "__task_count__"</code> 则只能使用 <code class="inline">COUNT</code>。</li>
+            </ul>
+
+            <h4 id="sec-1-6-2">1.6.2 用户看板配置 user_dashboard_config <span class="mark-updated">🔴 调整</span></h4>
+            <p><strong>功能</strong>：存储用户的首页态势个性化配置，包括多标签页、每个标签页的列选、筛选、排序设置。</p>
+            <p><strong>使用页面</strong>：首页看板。</p>
+            <p><strong>责任人</strong>：小苏。</p>
+            <p><strong>存储方式</strong>：以userId为键，存储以下结构：</p>
+            <pre class="json-code">{
+                "userId": "user_001",
+                "customsMetrics": ["metric_id_001", "metric_id_002"],
+                "sectionMetrics": ["metric_id_003"],
+                "tabs": [
+                {
+                "id": "tab_001",
+                "label": "年度重点任务",
+                "type": "task_list",
+                "config": {
+                "taskTypeIds": ["type_annual"],
+                "columns": ["title", "status", "deadline", "responsiblePerson"],
+                "filters": [{"field": "status", "operator": "=", "value": "in_progress"}],
+                "sortBy": {"field": "deadline", "order": "asc"},
+                "isDefault": false
+                }
+                }
+                ],
+                "activeTabId": "tab_001",
+                "layout": "grid"
+        }</pre>
+            <p><strong>说明</strong>：</p>
+            <ul>
+                <li><span class="mark-updated">🔴 调整</span> 原 <code class="inline">metrics</code> 数组拆分为 <code class="inline">customsMetrics</code>（关区态势指标）和 <code class="inline">sectionMetrics</code>（科级态势指标），分别对应首页两个态势区域的个性化选择。</li>
+                <li><code class="inline">tabs</code>：标签页数组，每个标签页独立保存列选、筛选、排序配置。</li>
+                <li><code class="inline">activeTabId</code>：当前激活的标签页ID，下次登录时自动恢复。</li>
+                <li><code class="inline">layout</code>：布局模式（grid网格 / list列表）。</li>
+            </ul>
+
+            <!-- 1.7 -->
+            <h3 id="sec-1-7">1.7 用户角色表 user_roles</h3>
+            <p><strong>功能</strong>：赋予特定人员跨部门权限（如督办员查看全关任务）。</p>
+            <p><strong>责任人</strong>：李彦鸿。</p>
+            <div class="table-wrapper">
+                <table>
+                    <thead><tr><th>字段名</th><th>类型</th><th>必填</th><th>说明</th></tr></thead>
+                    <tbody>
+                        <tr><td>userId</td><td>string</td><td>是</td><td>关联 <code class="inline">personnel.id</code></td></tr>
+                        <tr><td>role</td><td>enum</td><td>是</td><td>角色：<code class="inline">inspector</code>（督办员）、<code class="inline">admin</code>（系统管理员）</td></tr>
+                        <tr><td>scope</td><td>array</td><td>否</td><td>权限范围，为空表示全关。若限定范围，则存储部门ID数组</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ========== 第二部分 ========== -->
+        <section class="content-section" id="sec-2">
+            <h2>第二部分：前端模块与表单对应关系</h2>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr><th>前端页面</th><th>涉及数据表</th><th>核心操作</th><th>责任人</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>首页看板（态势区+任务列表标签页）</td><td>tasks, metric_definitions, user_dashboard_config</td><td>多标签页管理、列选/筛选/排序配置持久化、指标聚合查询、态势卡片穿透</td><td>小苏</td></tr>
+                        <tr><td>个人工作台</td><td>tasks, personnel</td><td>按角色筛选任务列表、批量送阅、提取任务状态查看、一键登录目标系统</td><td>小苏</td></tr>
+                        <tr><td>新建任务页</td><td>tasks, task_type_groups, task_types, flow_templates, data_sheet_templates, departments, personnel, tags</td><td>创建任务、级联选择类型、选择责任人、挂载流程和明细模板、预分配子任务</td><td>帅韬</td></tr>
+                        <tr><td>任务详情页</td><td>tasks, task_relations, files</td><td>反馈进展、推进环节、分解子任务、关联已有任务、上传附件、下载模板制度文件、填写明细数据、确认反馈、配置外部提取、领导批示</td><td>帅韬</td></tr>
+                        <tr><td>流程配置页</td><td>flow_templates, files</td><td>创建/编辑流程模板、配置环节选项、从文件库选择模板和制度文件、引用制度条款</td><td>小苏</td></tr>
+                        <tr><td>明细模板配置页</td><td>data_sheet_templates, system_fields</td><td>创建/编辑明细模板、从字段库选择字段</td><td>小苏</td></tr>
+                        <tr><td>字段管理页</td><td>system_fields</td><td>维护系统字段库、设置是否可聚合、建议级别</td><td>小苏</td></tr>
+                        <tr><td>类型与标签配置页</td><td>task_type_groups, task_types, tag_groups, tags</td><td>维护二级分类和标签、Excel导入导出</td><td>小苏</td></tr>
+                        <tr><td>组织架构管理页</td><td>departments, personnel</td><td>维护部门和人员、Excel导入导出、设置部门领导</td><td>小苏（部门）、帅韬（人员）</td></tr>
+                        <tr><td>文件管理页</td><td>files</td><td>上传、分类查看、版本管理、条款目录编辑、统一替换、搜索</td><td>帅韬</td></tr>
+                        <tr><td>态势配置页</td><td>metric_definitions</td><td>创建/编辑指标定义、指定级别和聚合规则、设置可见角色</td><td>小苏</td></tr>
+                        <tr><td>督办看板（高级筛选）</td><td>tasks, metric_definitions</td><td>多维度组合筛选、汇总统计、导出报表、发起催办</td><td>小苏</td></tr>
+                        <tr><td>浏览器扩展（隐式）</td><td>tasks（extractionConfig字段）, files</td><td>执行手动提取生成任务、自动监控回写状态、数据聚合</td><td>李彦鸿</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ========== 第三部分 ========== -->
+        <section class="content-section" id="sec-3">
+            <h2>第三部分：数据流转模拟</h2>
+            <p><strong>场景设定</strong></p>
+            <p>模拟用户：关长 王关（peerId: <code class="inline">user_wang</code>）、综合业务科科长 张科（peerId: <code class="inline">user_zhang</code>）、查验二科科长 李科（peerId: <code class="inline">user_li</code>）、查验二科科员 小张（peerId: <code class="inline">user_xiaozhang</code>）、办公室督办员 老陈（peerId: <code class="inline">user_chen</code>）、财务科科长 赵财（peerId: <code class="inline">user_zhao</code>）、后勤科科员 小周（peerId: <code class="inline">user_zhou</code>）。</p>
+
+            <h4 id="sec-3-1">步骤1：系统初始化与数据准备</h4>
+            <p>导入组织架构：管理员通过Excel导入departments和personnel，张科、李科、赵财isLeader=true，老陈在user_roles表中记为inspector。上传制度与模板文件：上传《海关查验操作规程.pdf》（file_id_policy_001）、《查验方案模板.docx》（file_id_tpl_001）、《预算管理办法.pdf》（file_id_policy_002），存入files表。配置流程模板："年度重点任务流程""采购实施流程""预算申报流程"，保存到flow_templates。配置明细模板："优化措施明细""采购设备明细""预算申报明细"，保存到data_sheet_templates。配置任务类型、态势指标。</p>
+
+            <h4 id="sec-3-2">步骤2：任务创建与分派 <span class="mark-new">🔴 更新</span></h4>
+            <p>关长王关新建任务"提升口岸通关效率专项"（task_001），选择类型"年度重点任务"，自动挂载流程快照和明细快照。主办部门：综合业务科；协办：查验二科、技术科。authorizedPeers自动计算并P2P同步推送给相关人员。张科进入task_001细化责任，更新responsibleMatrix中personnelId为科员小李。</p>
+            <p><span class="mark-new">🔴 新增</span> <strong>关注功能</strong>：张科在任务列表中发现"提升口岸通关效率专项"任务，点击星标关注。系统将张科的 peerId 追加到任务的 <code class="inline">starredBy</code> 数组。此后张科的个人工作台"关注任务"标签页中显示该任务，首页科级态势的"科长关注"置顶区也会出现此任务。</p>
+
+            <h4 id="sec-3-3">步骤3：子任务分解与关联已有任务</h4>
+            <p>张科在task_001下创建子任务"优化查验流程"（task_002），指派给查验二科小张。task_relations新增记录。小李发现已有独立任务"协调码头泊位"（task_003），在详情页点击"关联到父任务"，选择task_001并选"同构汇总"。系统创建关联记录，强制同步明细结构，双向合并authorizedPeers。</p>
+
+            <h4 id="sec-3-4">步骤4：任务办理与反馈确认</h4>
+            <p>小张打开task_002，下载模板、查看制度条款（pdf.js跳转到第15页）、填写明细表。点击"提交科长审核"推进环节。子任务完成触发父任务动态区生成待确认提示。张科进入task_001确认后，confirmedFeedback更新，态势中展示的正式反馈更新为已确认内容。</p>
+
+            <h4 id="sec-3-5">步骤5：浏览器扩展提取外部数据</h4>
+            <p>小张在task_002配置提取规则：输入目标URL，可视化选择DOM元素映射到明细字段，设置每60分钟自动提取。浏览器扩展读取extractionConfig，后台定时执行。检测到结果更新时自动在动态区添加记录并更新明细字段，通过P2P同步给所有authorizedPeers。</p>
+
+            <h4 id="sec-3-6">步骤6：长链条跨部门协同（预算→采购→后勤）</h4>
+            <p>6.1 预算申报阶段：task_004（购买查验设备）明细含设备X 20万。赵财创建task_005（2026年预算申报），关联上游task_004，系统生成数据快照冻结到task_005的snapshots。预算批复后更新明细，系统通知task_004。</p>
+            <p>6.2 采购申请阶段：小张创建task_006（采购申请），关联上游task_005，生成批复数据快照。前端校验申请金额不得超出批复金额。审批通过后通知task_005。</p>
+            <p>6.3 采购实施阶段：小周创建task_007（采购实施），关联上游task_006，生成快照冻结采购申请数据。补充"实际采购价""到货日期"等字段。全链条可溯源：task_007 → task_006 → task_005 → task_004。</p>
+
+            <h4 id="sec-3-7">步骤7：批量送阅</h4>
+            <p>张科在"我发起的任务"列表中勾选task_002和task_003，点击"批量送阅"，选择关长王关。系统将两个任务的sharedWith合并王关的peerId。P2P同步推送。王关在个人工作台"送阅任务"标签页查看。</p>
+
+            <h4 id="sec-3-8">步骤8：领导查阅与批示 <span class="mark-new">🔴 更新</span></h4>
+            <p>王关打开首页，点击"采购预算总额"指标卡片，穿透查看构成数字的具体任务列表。随后进入"口岸通关效率专项"任务详情页，在动态区的批示输入框提交批示："请加快推进，月底前完成阶段性总结"。系统向任务的 <code class="inline">activityLog</code> 追加一条 <code class="inline">type = 'leader_comment'</code> 的记录，同时在任务 <code class="inline">starredBy</code> 中已关注该任务的人员将收到 P2P 通知。首页领导批示置顶区立即刷新，显示此批示摘要。王关也可在任务详情页再次查看所有批示的动态时间线。</p>
+
+            <h4 id="sec-3-9">步骤9：首页态势多标签页配置 <span class="mark-new">🔴 更新</span></h4>
+            <p>王关点击首页关区态势的"自定义指标"按钮，从指标库中勾选"涉及企业数"和"采购预算总额"两个关级指标，保存后 <code class="inline">user_dashboard_config.customsMetrics</code> 更新。同时他新建标签页"采购监控"，配置筛选条件为任务类型"设备采购"和状态"进行中"，列选仅保留标题、部门、预算金额。这些配置存入 <code class="inline">tabs</code> 数组，并设置此标签页为当前激活。下次登录时自动恢复此标签页及指标配置。</p>
+
+            <h4 id="sec-3-10">步骤10：数据行权限控制 <span class="mark-new">🔴 更新</span></h4>
+            <p>小张在task_002明细表中新增一行（creatorId为小张）。小李也新增一行（creatorId为小李）。小张尝试删除小李的行：前端检查 <code class="inline">row.creatorId !== currentPeerId</code>，删除按钮置灰。小张尝试删除整个task_002：前端检查 <code class="inline">task.createdBy !== currentPeerId</code>，删除按钮不显示。</p>
+            <p><span class="mark-new">🔴 新增</span> <strong>动态记录</strong>：当小张新增或编辑数据行时，系统在 <code class="inline">activityLog</code> 中插入一条 <code class="inline">type = 'system'</code> 的记录，内容为"小张 新增/修改了数据明细"，以便审计追溯。</p>
+        </section>
+
+        <!-- ========== 第四部分 ========== -->
+        <section class="content-section" id="sec-4">
+            <h2>第四部分：关键设计决策说明</h2>
+            <div class="table-wrapper">
+                <table class="decision-table">
+                    <thead>
+                        <tr><th>决策点</th><th>最终裁定</th><th>理由</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>文件存储位置</td><td>文件Blob直接存储在IndexedDB的files表中</td><td>保证离线可用、安全保密、无需后端文件服务器</td></tr>
+                        <tr><td>Word文档预览</td><td>采用mammoth.js（转HTML）+ 浏览器打印为PDF + pdf.js渲染</td><td>纯前端免费方案，支持页码跳转</td></tr>
+                        <tr><td>制度文件条款跳转</td><td>前端使用pdf.js渲染，传入pageNumber参数实现页码跳转</td><td>稳定可靠，制度文件统一为PDF格式</td></tr>
+                        <tr><td>环节资源引用锁定</td><td>任务创建时快照文件ID，锁定版本。后续文件更新不影响已创建任务</td><td>保证任务执行时使用的模板和制度版本一致，满足审计要求</td></tr>
+                        <tr><td>父子任务权限合并</td><td>建立关联时双向合并authorizedPeers；解除关联时不缩减</td><td>确保关联双方能查看完整上下文，解除后保留已获得的查看权限</td></tr>
+                        <tr><td>个人自定义指标存储</td><td>在user_dashboard_config的customsMetrics/sectionMetrics数组中存储</td><td>结构简洁，查询方便</td></tr>
+                        <tr><td>督办员权限范围</td><td>user_roles表中scope为空表示全关，否则限定指定部门</td><td>灵活控制督办员的数据访问范围</td></tr>
+                        <tr><td>送阅任务</td><td>通过sharedWith数组存储被送阅人peerId</td><td>无需额外建表，利用已有P2P同步机制</td></tr>
+                        <tr><td>流程模板修改影响范围</td><td>模板修改不影响已创建任务（任务存有环节快照）</td><td>保证进行中的任务不受模板变更影响</td></tr>
+                        <tr><td>长链条协同解耦</td><td>采用"数据快照 + 引用关联 + 状态通知"模式</td><td>各科室任务独立运作，通过快照冻结上游数据，避免下游阻塞上游，满足审计追溯</td></tr>
+                        <tr><td>任务删除权限</td><td>仅createdBy可删除整个任务</td><td>防止误删，责任明确</td></tr>
+                        <tr><td>数据明细行编辑权限</td><td>仅creatorId可编辑和删除本人创建的行；可新增行</td><td>保护数据完整性，防止越权修改他人填报的数据</td></tr>
+                        <tr><td>负责人反馈确认</td><td>子任务完成和环节推进产生待确认提示，负责人确认后更新confirmedFeedback</td><td>确保正式反馈经责任人审核，避免信息噪音</td></tr>
+                        <tr><td>态势多标签页</td><td>在user_dashboard_config.tabs中存储，每个标签页独立保存列选、筛选、排序</td><td>满足不同管理视角的灵活切换需求</td></tr>
+                        <tr><td>P2P同步策略</td><td>任务级定向同步，authorizedPeers控制可见范围；inspector角色可跨部门接收</td><td>保证数据隐私，同时满足督办需求</td></tr>
+                        <tr><td><span class="mark-new">🔴 新增</span> 任务动态记录</td><td>在tasks.activityLog数组中按时间顺序存储所有操作记录</td><td>统一审计追溯入口，前端动态区统一渲染，避免分散存储</td></tr>
+                        <tr><td><span class="mark-new">🔴 新增</span> 态势指标筛选模式</td><td>metric_definitions.config支持filter和specific两种模式</td><td>兼顾灵活条件筛选和精准指定任务的场景需求</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <hr>
+            <p style="text-align:center; font-weight:700; font-size:16px; color:#1a1a2e;">📌 文档结束</p>
+            <p>本文档覆盖了全部已讨论需求的数据模型、关联驱动、责任分工和完整流转场景。所有表结构、字段定义、驱动关系均已明确，无待定项。开发组可依据此文档进行模块开发，各人对照第二部分的责任表认领任务。</p>
+        </section>
+
+    </div>
+
+    <!-- 回到顶部按钮 -->
+    <button class="back-to-top" id="backToTopBtn" title="回到顶部" aria-label="回到顶部">↑</button>
+
+    <script>
+        // 回到顶部按钮的显示/隐藏逻辑
+        const backToTopBtn = document.getElementById('backToTopBtn');
+
+        function toggleBackToTop() {
+            if (window.scrollY > 400) {
+                backToTopBtn.classList.add('visible');
+            } else {
+                backToTopBtn.classList.remove('visible');
+            }
+        }
+
+        window.addEventListener('scroll', toggleBackToTop, { passive: true });
+
+        backToTopBtn.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 初始检查
+        toggleBackToTop();
+    </script>
+
+</body>
+</html>

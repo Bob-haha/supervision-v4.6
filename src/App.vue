@@ -188,30 +188,25 @@ const pendingCount = computed(() => {
 });
 
 const menuGroups = computed(() => {
-  const isAdmin = authStore.isAdmin || authStore.isLeader;
+  const isAdmin = authStore.isAdmin || authStore.isLeader
   const groups: any[] = [
     {
-      title: '首页看板',
+      title: '首页',
       items: [
-        { path: '/dashboard', label: '首页看板', icon: 'DataBoard' },
+        { path: '/home', label: '首页看板', icon: 'DataBoard' },
       ],
     },
     {
       title: '任务管理',
       items: [
-        { path: '/tasks', label: '全部事项', icon: 'Monitor' },
-        { path: '/my-pending', label: '我的待办', icon: 'Clock', badge: pendingCount.value || 0 },
-        { path: '/Co-organized', label: '我的协办', icon: 'Connection' },
-        { path: '/my-watched', label: '我的关注', icon: 'Star' },
-        { path: '/dept-completed', label: '已办事项', icon: 'CircleCheck' },
+        { path: '/task/new', label: '新建任务', icon: 'Plus' },
+        { path: '/task/my', label: '我的任务', icon: 'Monitor', badge: pendingCount.value || 0 },
       ],
     },
     {
       title: '流程督办',
       items: [
-        { path: '/process/templates', label: '流程模板库', icon: 'SetUp' },
-        { path: '/supervision', label: '督办管理', icon: 'Bell' },
-        { path: '/history', label: '历史档案', icon: 'Finished' },
+        { path: '/inspector', label: '督办看板', icon: 'Bell' },
       ],
     },
     {
@@ -221,9 +216,21 @@ const menuGroups = computed(() => {
         { path: '/stats/guanqu', label: '关区数据看板', icon: 'TrendCharts' },
       ],
     },
-  ];
+  ]
 
   if (isAdmin) {
+    groups.push({
+      title: '配置管理',
+      items: [
+        { path: '/config/flow', label: '流程配置', icon: 'SetUp' },
+        { path: '/config/datasheet', label: '明细模板配置', icon: 'Document' },
+        { path: '/config/fields', label: '字段管理', icon: 'Grid' },
+        { path: '/config/types', label: '类型与标签配置', icon: 'Collection' },
+        { path: '/config/metrics', label: '态势配置', icon: 'TrendCharts' },
+        { path: '/config/files', label: '文件管理', icon: 'Folder' },
+        { path: '/config/organization', label: '组织架构', icon: 'OfficeBuilding' },
+      ],
+    })
     groups.push({
       title: '系统管理',
       items: [
@@ -233,22 +240,19 @@ const menuGroups = computed(() => {
         { path: '/admin/signaling', label: '信令服务器', icon: 'Connection' },
         { path: '/admin/settings', label: '系统设置', icon: 'Setting' },
       ],
-    });
+    })
   }
 
-  return groups;
-});
+  return groups
+})
 
 function isMenuActive(item: any) {
-  if (item.path === '/dashboard') return route.path === '/dashboard';
-  if (item.path === '/my-pending') return route.path === '/host';
-  if (item.path === '/my-watched') return route.path === '/my-watched';
-  return route.path === item.path || route.path.startsWith(item.path + '/');
+  if (item.path === '/home') return route.path === '/home'
+  return route.path === item.path || route.path.startsWith(item.path + '/')
 }
 
 function navigateTo(path: string) {
-  if (path === '/my-pending') path = '/host';
-  router.push(path);
+  router.push(path)
 }
 
 function doGlobalSearch() {
@@ -258,9 +262,9 @@ function doGlobalSearch() {
 }
 
 function handleUserCmd(cmd: string) {
-  if (cmd === 'logout') authStore.logout();
-  else if (cmd === 'profile') ElMessage.info('个人信息页面');
-  else if (cmd === 'settings') router.push('/admin/settings');
+  if (cmd === 'logout') authStore.logout()
+  else if (cmd === 'profile') router.push('/config/organization')
+  else if (cmd === 'settings') router.push('/admin/settings')
 }
 
 function parseSQLOperation(sql: string, params: any[]): { table: string; recordId: string; operation: 'INSERT' | 'UPDATE' | 'DELETE' } | null {

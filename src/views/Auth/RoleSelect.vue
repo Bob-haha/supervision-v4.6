@@ -52,37 +52,48 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue';
-import { useAuthStore } from '@/stores/auth';
-import { DEPT_MAP } from '@/constants'; 
-import { ElMessage } from 'element-plus';
+import { reactive } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { usePersonnelStore } from '@/stores/personnel'
+import { DEPT_MAP } from '@/constants'
+import { ElMessage } from 'element-plus'
 
-const authStore = useAuthStore();
+const authStore = useAuthStore()
+const personnelStore = usePersonnelStore()
 
 const form = reactive({
   name: '',
-  role: 'STAFF',
+  role: 'STAFF' as 'ADMIN' | 'LEADER' | 'STAFF',
   deptId: ''
-});
+})
 
-const handleEnter = () => {
+const handleEnter = async () => {
   if (!form.name.trim()) {
-    ElMessage.error("请填入姓名");
-    return;
+    ElMessage.error('请填入姓名')
+    return
   }
   if (form.role === 'STAFF' && !form.deptId) {
-    ElMessage.error("请选择科室");
-    return;
+    ElMessage.error('请选择科室')
+    return
   }
 
+  // 从人员表中查找匹配的用户，使用真实 personnel.id 作为会话 ID
+  await personnelStore.initPersonnelIfEmpty()
+  await personnelStore.fetchAllPersonnel()
+  const match = personnelStore.allPersonnel.find(
+    p => p.name === form.name.trim() && (form.role !== 'STAFF' || p.dept_id === form.deptId || p.departmentId === form.deptId)
+  )
+
+  const userId = match ? match.id : ('u_' + Date.now())
+
   authStore.setUser({
-    id: 'u_' + Date.now(),
+    id: userId,
     name: form.name,
-    role: form.role as any,
-    deptId: form.role === 'STAFF' ? form.deptId : ''
-  });
-  ElMessage.success('登录成功');
-};
+    role: form.role,
+    deptId: form.role === 'STAFF' ? form.deptId : (match?.dept_id || match?.departmentId || ''),
+  })
+  ElMessage.success(match ? `欢迎，${form.name}` : `以临时身份登录: ${form.name}`)
+}
 </script>
 
 <style scoped>

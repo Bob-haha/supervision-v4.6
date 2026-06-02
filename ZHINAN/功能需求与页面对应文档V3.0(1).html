@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新沙海关任务管理系统 - 功能需求与页面对应文档</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', 'Roboto', 'Noto Sans', system-ui, -apple-system, sans-serif;
+            background-color: #f0f2f5;
+            color: #1e293b;
+            line-height: 1.5;
+            padding: 2rem 1rem;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        /* 文档头部 */
+        .doc-header {
+            background: linear-gradient(135deg, #0f2b3d 0%, #1b4a6e 100%);
+            color: white;
+            padding: 2rem 2.5rem;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        .doc-header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            margin-bottom: 0.5rem;
+        }
+        .doc-header .meta {
+            opacity: 0.8;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+        }
+        .update-badge {
+            background-color: #ffc107;
+            color: #1e293b;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 1rem;
+        }
+        /* 目录侧边栏 + 内容布局 */
+        .docs-layout {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .toc {
+            background-color: #f8fafc;
+            width: 280px;
+            flex-shrink: 0;
+            border-right: 1px solid #e2e8f0;
+            padding: 2rem 0 2rem 1rem;
+            position: sticky;
+            top: 0;
+            height: calc(100vh - 2rem);
+            overflow-y: auto;
+        }
+        .toc h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #475569;
+            margin-bottom: 1.25rem;
+            padding-left: 0.75rem;
+        }
+        .toc ul {
+            list-style: none;
+            margin: 0;
+            padding-left: 0;
+        }
+        .toc li {
+            margin-bottom: 0.5rem;
+        }
+        .toc a {
+            display: block;
+            padding: 0.4rem 0.75rem;
+            color: #334155;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .toc a:hover {
+            background-color: #e2e8f0;
+            color: #0f3b5c;
+        }
+        .toc .level2 {
+            padding-left: 1.5rem;
+            font-size: 0.8rem;
+        }
+        .content {
+            flex: 1;
+            padding: 2rem 2.5rem;
+            overflow-x: auto;
+        }
+        /* 章节样式 */
+        .section {
+            margin-bottom: 3rem;
+            scroll-margin-top: 1rem;
+        }
+        .section h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            border-left: 5px solid #1e6f3f;
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+            margin-top: 0.5rem;
+            color: #0c4a6e;
+        }
+        .section h3 {
+            font-size: 1.3rem;
+            font-weight: 500;
+            margin: 1.2rem 0 0.8rem 0;
+            padding-bottom: 0.25rem;
+            border-bottom: 2px solid #e2e8f0;
+            color: #1e3a5f;
+        }
+        .subsection {
+            margin: 1.5rem 0 0.8rem 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.85rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        th {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #0c4a6e;
+        }
+        td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            vertical-align: top;
+        }
+        .badge-new {
+            background-color: #dc2626;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 20px;
+            margin-left: 6px;
+            display: inline-block;
+        }
+        .highlight {
+            background-color: #fef9c3;
+        }
+        .footnote {
+            font-size: 0.8rem;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        @media (max-width: 800px) {
+            .toc {
+                display: none;
+            }
+            .content {
+                padding: 1rem;
+            }
+        }
+        code {
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        .card-tip {
+            background: #eef2ff;
+            border-left: 4px solid #2563eb;
+            padding: 0.75rem 1rem;
+            margin: 1rem 0;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="doc-header">
+        <h1>新沙海关任务管理系统 · 功能需求与页面对应文档</h1>
+        <div class="meta">
+            <span>版本：1.0 (最终修订版)</span>
+            <span>编制：项目牵头人</span>
+            <span>日期：2026-05-28</span>
+            <span class="update-badge">✅ 已整合调整内容 (基于开发规格书)</span>
+        </div>
+        <div style="margin-top: 12px; font-size: 0.85rem;">用途：为开发规格书提供完整的功能-页面映射基础 · 包含归档、动态统一记录、指标细化等新增需求</div>
+    </div>
+    <div class="docs-layout">
+        <div class="toc">
+            <h3>📑 目录</h3>
+            <ul>
+                <li><a href="#structure">系统页面结构总览</a></li>
+                <li><a href="#home">一、首页看板 /home</a></li>
+                <li><a href="#task-new">二、新建任务页 /task/new</a></li>
+                <li><a href="#task-detail">三、任务详情页 /task/:id</a></li>
+                <li><a href="#flow-config">四、流程配置页 /config/flow</a></li>
+                <li><a href="#datasheet-config">五、明细模板配置 /config/datasheet</a></li>
+                <li><a href="#fields-config">六、字段管理 /config/fields</a></li>
+                <li><a href="#types-config">七、类型与标签配置 /config/types</a></li>
+                <li><a href="#org-config">八、组织架构管理 /config/organization</a></li>
+                <li><a href="#files-config">九、文件管理页 /config/files</a></li>
+                <li><a href="#metrics-config">十、态势配置页 /config/metrics</a></li>
+                <li><a href="#inspector">十一、督办看板 /inspector</a></li>
+                <li><a href="#extension">十二、浏览器扩展功能</a></li>
+                <li><a href="#permissions">十三、权限控制功能</a></li>
+                <li><a href="#cross-index">十四、功能-页面-数据表交叉索引</a></li>
+            </ul>
+        </div>
+        <div class="content">
+            <!-- 页面结构总览 -->
+            <div class="section" id="structure">
+                <h2>系统页面结构总览</h2>
+                <p>系统共有以下核心页面，按导航结构组织：</p>
+                <table>
+                    <thead><tr><th>导航分类</th><th>页面名称</th><th>路由</th><th>主要用户</th></tr></thead>
+                    <tbody>
+                        <tr><td>主菜单</td><td>首页看板</td><td>/home</td><td>所有用户</td></tr>
+                        <tr><td>主菜单</td><td>新建任务</td><td>/task/new</td><td>所有用户</td></tr>
+                        <tr><td>主菜单</td><td>我的任务</td><td>/task/my</td><td>所有用户</td></tr>
+                        <tr><td>主菜单</td><td>任务详情</td><td>/task/:id</td><td>授权用户</td></tr>
+                        <tr><td>主菜单</td><td>督办看板</td><td>/inspector</td><td>督办员、关领导</td></tr>
+                        <tr><td>配置</td><td>流程配置</td><td>/config/flow</td><td>管理员、科领导</td></tr>
+                        <tr><td>配置</td><td>明细模板配置</td><td>/config/datasheet</td><td>管理员</td></tr>
+                        <tr><td>配置</td><td>字段管理</td><td>/config/fields</td><td>管理员</td></tr>
+                        <tr><td>配置</td><td>类型与标签配置</td><td>/config/types</td><td>管理员</td></tr>
+                        <tr><td>配置</td><td>组织架构</td><td>/config/organization</td><td>管理员</td></tr>
+                        <tr><td>配置</td><td>文件管理</td><td>/config/files</td><td>管理员</td></tr>
+                        <tr><td>配置</td><td>态势配置</td><td>/config/metrics</td><td>管理员</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 一、首页看板 -->
+            <div class="section" id="home">
+                <h2>一、首页看板 <code style="font-size:0.9rem;">/home</code></h2>
+                <p>从上至下分为：关区业务态势、科级业务态势、个人工作台</p>
+                <h3>关区业务态势</h3>
+                <table><thead><tr><th>功能编号</th><th>功能名称</th><th>功能描述</th><th>涉及数据表</th><th>操作</th></tr></thead>
+                <tbody>
+                    <tr><td>H-01</td><td>态势指标卡片展示</td><td>卡片展示关级数据指标，如企业数、预算总额、逾期任务数等，含环比</td><td>metric_definitions, tasks</td><td>读取</td></tr>
+                    <tr><td>H-02</td><td>态势指标个性化 <span class="badge-new">已调整</span></td><td>用户自定义指标，<strong>关区态势指标保存到 user_dashboard_config.customsMetrics，科级态势保存到 sectionMetrics</strong>，调整顺序</td><td>metric_definitions, user_dashboard_config</td><td>读写</td></tr>
+                    <tr><td>H-03</td><td>态势卡片穿透</td><td>点击数值弹窗明细列表，可跳转任务详情</td><td>tasks</td><td>读取</td></tr>
+                    <tr><td>H-04</td><td>多标签页管理</td><td>新建/重命名/删除标签页，独立保存列选、筛选、排序</td><td>user_dashboard_config</td><td>读写</td></tr>
+                    <tr><td>H-05~H-07</td><td>列选/筛选/排序</td><td>每个标签页独立配置展示字段、组合筛选、排序规则</td><td>user_dashboard_config</td><td>写入</td></tr>
+                    <tr><td>H-08</td><td>领导批示置顶区 <span class="badge-new">已调整</span></td><td>展示7天内领导批示任务（<code>activityLog type='leader_comment'</code>），显示标题、环节、批示摘要，无批示隐藏</td><td>tasks(activityLog)</td><td>读取</td></tr>
+                    <tr><td>H-09</td><td>重点任务进度列表 <span class="badge-new">已调整</span></td><td>浏览器标签页预置：全部、年度重点、领导关注、逾期/临期，独立保存配置</td><td>tasks, user_dashboard_config</td><td>读取</td></tr>
+                    <tr><td>H-10</td><td>态势数据自动刷新</td><td>基于IndexedDB定时刷新聚合查询</td><td>metric_definitions, tasks</td><td>读取</td></tr>
+                    <tr><td><strong>H-21</strong> <span class="badge-new">新增</span></td><td>关/科态势指标分别自定义</td><td>关区态势和科级态势各自独立存储自定义指标列表（customsMetrics/sectionMetrics），互不干扰</td><td>user_dashboard_config</td><td>写入</td></tr>
+                </tbody></table>
+                <h3>科级业务态势 & 个人工作台 (部分关键调整)</h3>
+                <table><thead><tr><th>功能编号</th><th>功能名称</th><th>功能描述</th><th>涉及数据表</th><th>操作</th></tr></thead>
+                <tbody>
+                    <tr><td>H-15</td><td>关注任务标签页 <span class="badge-new">已调整</span></td><td>展示用户标记关注任务 (<code>starredBy</code>包含当前peerId)，置顶 priority=leadership_attention</td><td>tasks(starredBy)</td><td>读取</td></tr>
+                    <tr><td>H-20</td><td>批量送阅 <span class="badge-new">已调整</span></td><td>列表多选任务，批量将人员的peerId添加到各任务sharedWith数组（去重）</td><td>tasks, personnel, departments</td><td>写入</td></tr>
+                    <tr><td>H-18</td><td>我的提取任务</td><td>展示提取任务含一键登录/手动提取/自动提取配置</td><td>tasks(extractionConfig)</td><td>读写</td></tr>
+                </tbody></table>
+            </div>
+
+            <!-- 二、新建任务页 -->
+            <div class="section" id="task-new">
+                <h2>二、新建任务页 <code>/task/new</code></h2>
+                <table><thead><tr><th>编号</th><th>功能名称</th><th>描述</th><th>涉及数据表</th><th>操作</th></tr></thead>
+                <tbody>
+                    <tr><td>N-01~N-10</td><td>基础信息/类型/标签/主办协办/流程模板/明细/子任务预分配/来源/紧急程度</td><td>创建任务完整录入</td><td>tasks,task_types,flow_templates,departments等</td><td>写入</td></tr>
+                    <tr><td><strong>N-11</strong> <span class="badge-new">新增</span></td><td>任务归档</td><td>任务完成后创建人可归档（详情页或批量归档），status='archived'，不再显示进行中列表</td><td>tasks</td><td>写入</td></tr>
+                </tbody></table>
+            </div>
+
+            <!-- 三、任务详情页 (核心) -->
+            <div class="section" id="task-detail">
+                <h2>三、任务详情页 <code>/task/:id</code></h2>
+                <p>六大区域：任务头栏、责任矩阵、环节流程、子任务、动态与批示、数据明细区</p>
+                <h3>关键调整功能</h3>
+                <table><thead><tr><th>编号</th><th>功能名称</th><th>调整后描述</th><th>涉及数据表</th><th>操作</th></tr></thead>
+                <tbody>
+                    <tr><td>D-05</td><td>关注星标</td><td>当前用户peerId加入/移出 tasks.starredBy 数组，星标高亮</td><td>tasks(starredBy)</td><td>读写</td></tr>
+                    <tr><td>D-26</td><td>动态时间线</td><td>基于<code>activityLog</code>数组渲染，类型含stage_progress, feedback, leader_comment, urge, external_notification等</td><td>tasks(activityLog)</td><td>读取</td></tr>
+                    <tr><td>D-28</td><td>领导批示输入</td><td>关领导专用框提交，向 activityLog 追加 type='leader_comment'，P2P通知授权人员</td><td>tasks(activityLog)</td><td>写入</td></tr>
+                    <tr><td>D-30</td><td>负责人确认反馈</td><td>确认后更新 confirmedFeedback 字段，并追加确认记录到 activityLog</td><td>tasks(confirmedFeedback, activityLog)</td><td>读写</td></tr>
+                    <tr><td><strong>D-40</strong> <span class="badge-new">新增</span></td><td>动态记录管理</td><td>所有操作统一写入 activityLog 数组（环节流转、反馈、批示、催办、附件上传、外部通知等），前端动态时间线统一按此渲染</td><td>tasks(activityLog)</td><td>写入</td></tr>
+                </tbody></table>
+                <p>其他功能：责任矩阵分派、环节选项、子任务关联聚合、数据明细动态表单等均保留，其中数据明细区行级权限仅创建人可编辑/删除。</p>
+                <div class="card-tip"><strong>提取配置面板(E-01~E-06)</strong> 内嵌于详情页，支持执行人指定、URL映射、定时提取及状态查看。</div>
+            </div>
+
+            <!-- 四、流程配置页 调整F-06-->
+            <div class="section" id="flow-config">
+                <h2>四、流程配置页 <code>/config/flow</code></h2>
+                <table><thead><tr><th>编号</th><th>功能名称</th><th>调整/描述</th><th>数据表</th></tr></thead>
+                <tbody>
+                    <tr><td>F-06</td><td>制度文件引用 <span class="badge-new">已调整</span></td><td>从文件库选policy文件，展示文号、生效日期、失效日期，过期文件红标警告；允许引用但弱提醒；支持选择具体条款(clauses)</td><td>flow_templates, files</td></tr>
+                    <tr><td>F-01~F-10</td><td>流程模板新建/环节/选项/约束/从任务保存模板</td><td>保持原有功能，支持拖拽排序、环节约束、模板文件引用</td><td>flow_templates, files</td></tr>
+                </tbody></table>
+            </div>
+
+            <!-- 五、明细模板配置 / 六、字段管理 / 七、类型标签 / 八、组织架构 (无调整保留但保持一致性) -->
+            <div class="section" id="datasheet-config"><h2>五、明细模板配置</h2><p>模板列表、新建、从字段库勾选、排序删除等 (DS-01~DS-05)</p></div>
+            <div class="section" id="fields-config"><h2>六、字段管理 <code>/config/fields</code></h2><p>系统字段增删改，可聚合标记及建议级别 (SF-01~SF-06)</p></div>
+            <div class="section" id="types-config"><h2>七、类型与标签配置</h2><p>一级/二级分类、默认模板绑定、标签组管理、Excel导入导出 (T-01~T-07)</p></div>
+            <div class="section" id="org-config"><h2>八、组织架构管理</h2><p>部门树维护、人员增删改、批量导入导出 (O-01~O-11)</p></div>
+
+            <!-- 九、文件管理页 FL-10调整 -->
+            <div class="section" id="files-config">
+                <h2>九、文件管理页 <code>/config/files</code></h2>
+                <table><thead><tr><th>编号</th><th>功能名称</th><th>调整描述</th><th>数据表</th></tr></thead>
+                <tbody>
+                    <tr><td>FL-10</td><td>文件有效期校验 <span class="badge-new">已调整</span></td><td>制度文件列表标红过期；流程配置FilePicker提供“仅显示有效期内”开关，引用时高亮警告；Word上传建议转PDF以保证条款页码准确</td><td>files(effectiveDate, expiryDate)</td></tr>
+                    <tr><td>FL-01~FL-09</td><td>分类浏览/上传/版本/统一替换/条款编辑</td><td>同原始需求，支持版本管理及全文替换</td><td>files, tasks</td></tr>
+                </tbody></table>
+            </div>
+
+            <!-- 十、态势配置页 重写M-02指标新建 -->
+            <div class="section" id="metrics-config">
+                <h2>十、态势配置页 <code>/config/metrics</code></h2>
+                <table><thead><tr><th>编号</th><th>功能名称</th><th>调整/细化描述</th><th>数据表</th></tr></thead>
+                <tbody>
+                    <tr><td>M-02</td><td>新建指标 <span class="badge-new">已调整</span></td><td>输入名称、级别、可见角色，<strong>筛选模式二选一：1)按条件筛选(类型/标签/时间范围至少一个)；2)指定具体任务(多选任务)。聚合字段从<code>system_fields(isAggregatable=true)</code>或特殊值'任务计数(__task_count__)'选取，聚合函数根据字段类型动态SUM/COUNT等。</strong>配置保存至metric_definitions.config</td><td>metric_definitions, system_fields, tasks</td></tr>
+                    <tr><td>M-01,M-03~M-06</td><td>指标列表/编辑/删除/排序/推荐标记</td><td>支持系统内置指标不可删除，推荐指标默认选中</td><td>metric_definitions</td></tr>
+                </tbody></table>
+            </div>
+
+            <!-- 十一、督办看板 I-06调整 -->
+            <div class="section" id="inspector">
+                <h2>十一、督办看板 <code>/inspector</code></h2>
+                <table><thead><tr><th>编号</th><th>功能名称</th><th>调整描述</th><th>数据表</th></tr></thead>
+                <tbody>
+                    <tr><td>I-06</td><td>催办操作 <span class="badge-new">已调整</span></td><td>快速留言：追加<code>activityLog</code> type='urge'记录并P2P通知；创建督办任务：跳转新建任务并建立task_relations关联</td><td>tasks(activityLog), task_relations</td></tr>
+                    <tr><td>I-01~I-05,I-07</td><td>多维筛选/统计图表/导出/黄红灯预警</td><td>保留原有统计汇总和预警功能</td><td>tasks</td></tr>
+                </tbody></table>
+            </div>
+
+            <!-- 十二、浏览器扩展功能 (原始保留)-->
+            <div class="section" id="extension"><h2>十二、浏览器扩展功能</h2><p>手动提取邮件/公文生成任务、自动监控表单状态、P2P同步、DOM选择器、一键登录及提取状态上报 (EX-01~EX-07)</p></div>
+            <!-- 十三、权限控制-->
+            <div class="section" id="permissions"><h2>十三、权限控制功能</h2><p>任务删除仅创建人、数据行仅创建人可编、P2P定向同步、督办员全关访问、管理员配置权限、态势数据受P2P范围限制 (P-01~P-07)</p></div>
+
+            <!-- 十四、交叉索引 更新 -->
+            <div class="section" id="cross-index">
+                <h2>十四、功能-页面-数据表交叉索引 (调整后)</h2>
+                <table><thead><tr><th>页面</th><th>主要功能编号</th><th>主要涉及数据表</th></tr></thead>
+                <tbody>
+                    <tr><td>首页看板</td><td>H-01~H-20, H-21</td><td>tasks, metric_definitions, user_dashboard_config, personnel, departments</td></tr>
+                    <tr><td>新建任务</td><td>N-01~N-10, N-11</td><td>tasks, task_type_groups, task_types, flow_templates, data_sheet_templates, departments, personnel, tags</td></tr>
+                    <tr><td>任务详情</td><td>D-01~D-39, D-40, E-01~E-06</td><td>tasks, task_relations, files, departments, personnel</td></tr>
+                    <tr><td>流程配置</td><td>F-01~F-10</td><td>flow_templates, files</td></tr>
+                    <tr><td>明细模板配置</td><td>DS-01~DS-05</td><td>data_sheet_templates, system_fields</td></tr>
+                    <tr><td>字段管理</td><td>SF-01~SF-06</td><td>system_fields</td></tr>
+                    <tr><td>类型与标签配置</td><td>T-01~T-07</td><td>task_type_groups, task_types, tag_groups, tags</td></tr>
+                    <tr><td>组织架构</td><td>O-01~O-11</td><td>departments, personnel</td></tr>
+                    <tr><td>文件管理</td><td>FL-01~FL-10</td><td>files</td></tr>
+                    <tr><td>态势配置</td><td>M-01~M-06</td><td>metric_definitions, system_fields, tasks</td></tr>
+                    <tr><td>督办看板</td><td>I-01~I-07</td><td>tasks, task_relations</td></tr>
+                    <tr><td>浏览器扩展</td><td>EX-01~EX-07</td><td>tasks, files</td></tr>
+                </tbody></table>
+                <div class="footnote">注：所有“动态记录”统一使用 tasks.activityLog；任务归档、批量送阅等调整均已体现在对应页面。全文与最终开发规格书及数据模型保持一致。</div>
+            </div>
+        </div>
+    </div>
+    <div style="background:#f9fafb; border-top:1px solid #e2e8f0; padding:1rem 2rem; font-size:0.8rem; text-align:center; color:#475569;">
+        新沙海关任务管理系统 —— 功能需求与页面对应文档 (最终整合版)   |   基于开发规格书调整完成
+    </div>
+</div>
+</body>
+</html>

@@ -111,25 +111,56 @@ export class DatabaseManager {
     if (!this.db) return;
 
     const schemaSql = `
-      -- 1. 督办任务主表
+      -- ============================================================
+      -- 原有表（保留兼容）
+      -- ============================================================
+
+      -- 1. 督办任务主表（V3.0 扩展）
       CREATE TABLE IF NOT EXISTS tasks (
         id TEXT PRIMARY KEY,
         parent_id TEXT,
-        level INTEGER NOT NULL,
+        level INTEGER NOT NULL DEFAULT 1,
         title TEXT NOT NULL,
         content TEXT,
         task_type TEXT,
-        priority TEXT,
-        owner_dept_ids TEXT,     -- 存储主办科室 JSON
-        co_dept_ids TEXT,        -- 存储协办科室 JSON
-        dept_requirements TEXT,  -- 存储分科室要求 JSON
-        co_dept_requirements TEXT, -- 存储分协办科室要求 JSON
-        deadline DATETIME,
-        status TEXT DEFAULT 'PENDING',
+        priority TEXT DEFAULT 'normal',
+        owner_dept_ids TEXT,
+        co_dept_ids TEXT,
+        dept_requirements TEXT,
+        co_dept_requirements TEXT,
+        deadline TEXT,
+        status TEXT DEFAULT 'pending',
         progress INTEGER DEFAULT 0,
         leader_instructions TEXT,
-        is_history INTEGER DEFAULT 0,        
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        is_history INTEGER DEFAULT 0,
+        created_at TEXT,
+        -- V3.0 扩展字段
+        taskTypeGroupId TEXT,
+        taskTypeId TEXT,
+        description TEXT,
+        responsibleMatrix TEXT,
+        stagesSnapshot TEXT,
+        flowTemplateId TEXT,
+        currentStageIndex INTEGER DEFAULT 0,
+        confirmedFeedback TEXT,
+        dataSheetTemplateId TEXT,
+        dataSheetFields TEXT,
+        dataSheetRows TEXT,
+        childAggregationMode TEXT DEFAULT 'none',
+        aggregationRules TEXT,
+        snapshots TEXT,
+        extractionConfig TEXT,
+        authorizedPeers TEXT DEFAULT '[]',
+        sharedWith TEXT DEFAULT '[]',
+        createdBy TEXT,
+        updatedAt TEXT,
+        starredBy TEXT DEFAULT '[]',
+        activityLog TEXT DEFAULT '[]',
+        childTaskIds TEXT DEFAULT '[]',
+        source TEXT DEFAULT 'OTHER',
+        tags TEXT DEFAULT '[]',
+        handler_name TEXT DEFAULT '',
+        is_key_task INTEGER DEFAULT 0
       );
 
       -- 2. 进展反馈留痕表
@@ -138,10 +169,12 @@ export class DatabaseManager {
         task_id TEXT NOT NULL,
         dept_id TEXT NOT NULL,
         content TEXT,
-        attachments TEXT,       -- 附件路径 JSON
+        attachments TEXT,
         feedback_person TEXT,
-        feedback_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-        is_apply_complete INTEGER DEFAULT 0
+        feedback_time TEXT,
+        is_apply_complete INTEGER DEFAULT 0,
+        is_leader_instruction INTEGER DEFAULT 0,
+        highlighted INTEGER DEFAULT 0
       );
 
       -- 3. 领导批示记录表
@@ -151,7 +184,8 @@ export class DatabaseManager {
         leader_name TEXT,
         content TEXT,
         attachments TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TEXT,
+        highlighted INTEGER DEFAULT 0
       );
 
       -- 4. 同步操作日志表
@@ -190,13 +224,17 @@ export class DatabaseManager {
         conflict_timestamp INTEGER
       );
 
-      -- 7. 流程模板库
-      CREATE TABLE IF NOT EXISTS process_templates (
+      -- 7. 流程模板库（V3.0 扩展）
+      CREATE TABLE IF NOT EXISTS flow_templates (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         description TEXT,
         scope TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        stages TEXT,
+        createdBy TEXT,
+        isPublic INTEGER DEFAULT 1,
+        created_at TEXT,
+        updatedAt TEXT
       );
 
       -- 8. 流程模板环节
@@ -218,7 +256,7 @@ export class DatabaseManager {
         node_description TEXT,
         sort_order INTEGER NOT NULL,
         status TEXT DEFAULT 'PENDING',
-        completed_at DATETIME,
+        completed_at TEXT,
         completed_by TEXT
       );
 
@@ -229,7 +267,7 @@ export class DatabaseManager {
         dept_id TEXT NOT NULL,
         person_name TEXT NOT NULL,
         assigned_by TEXT,
-        assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        assigned_at TEXT,
         status TEXT DEFAULT 'PENDING',
         feedback TEXT
       );
@@ -239,7 +277,7 @@ export class DatabaseManager {
         id TEXT PRIMARY KEY,
         task_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at TEXT
       );
 
       -- 12. 领导批示已阅记录
@@ -247,7 +285,7 @@ export class DatabaseManager {
         id TEXT PRIMARY KEY,
         instruction_id TEXT NOT NULL,
         user_id TEXT NOT NULL,
-        read_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        read_at TEXT
       );
 
       -- 13. 任务类型动态字段定义
@@ -272,51 +310,291 @@ export class DatabaseManager {
       CREATE TABLE IF NOT EXISTS supervision_reminders (
         id TEXT PRIMARY KEY,
         task_id TEXT NOT NULL,
-        reminded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        reminded_at TEXT,
         reminded_by TEXT,
         remind_content TEXT
       );
 
-      -- 16. 人员目录
+      -- 16. 人员目录（V3.0 扩展）
       CREATE TABLE IF NOT EXISTS personnel (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
         dept_id TEXT NOT NULL,
         position TEXT,
-        is_dept_head INTEGER DEFAULT 0
+        is_dept_head INTEGER DEFAULT 0,
+        employeeNo TEXT,
+        departmentId TEXT,
+        isLeader INTEGER DEFAULT 0,
+        email TEXT,
+        isActive INTEGER DEFAULT 1,
+        sortOrder INTEGER DEFAULT 0
+      );
+
+      -- ============================================================
+      -- V3.0 新增表
+      -- ============================================================
+
+      -- 17. 部门表
+      CREATE TABLE IF NOT EXISTS departments (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        shortName TEXT,
+        parentId TEXT,
+        leaderId TEXT,
+        sortOrder INTEGER DEFAULT 0,
+        isActive INTEGER DEFAULT 1
+      );
+
+      -- 18. 任务关联表
+      CREATE TABLE IF NOT EXISTS task_relations (
+        id TEXT PRIMARY KEY,
+        parentTaskId TEXT NOT NULL,
+        childTaskId TEXT NOT NULL,
+        relationType TEXT NOT NULL DEFAULT 'parent_child',
+        aggregationMode TEXT DEFAULT 'none',
+        aggregationRules TEXT,
+        createdAt TEXT
+      );
+
+      -- 19. 系统字段库
+      CREATE TABLE IF NOT EXISTS system_fields (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        fieldType TEXT NOT NULL DEFAULT 'text',
+        fieldOptions TEXT,
+        unit TEXT,
+        isAggregatable INTEGER DEFAULT 0,
+        suggestedLevel TEXT,
+        isSystem INTEGER DEFAULT 0
+      );
+
+      -- 20. 动态明细模板表
+      CREATE TABLE IF NOT EXISTS data_sheet_templates (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        fields TEXT NOT NULL,
+        defaultSort TEXT,
+        createdAt TEXT
+      );
+
+      -- 21. 任务类型一级分类
+      CREATE TABLE IF NOT EXISTS task_type_groups (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        sortOrder INTEGER DEFAULT 0
+      );
+
+      -- 22. 任务类型二级子项
+      CREATE TABLE IF NOT EXISTS task_types (
+        id TEXT PRIMARY KEY,
+        groupId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        defaultFlowTemplateId TEXT,
+        defaultDataSheetTemplateId TEXT,
+        sortOrder INTEGER DEFAULT 0
+      );
+
+      -- 23. 标签组
+      CREATE TABLE IF NOT EXISTS tag_groups (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        sortOrder INTEGER DEFAULT 0
+      );
+
+      -- 24. 标签
+      CREATE TABLE IF NOT EXISTS tags (
+        id TEXT PRIMARY KEY,
+        groupId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        sortOrder INTEGER DEFAULT 0
+      );
+
+      -- 25. 文件表
+      CREATE TABLE IF NOT EXISTS files (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL DEFAULT 'attachment',
+        mimeType TEXT,
+        size INTEGER DEFAULT 0,
+        data BLOB,
+        version INTEGER DEFAULT 1,
+        isLatest INTEGER DEFAULT 1,
+        replacesFileId TEXT,
+        relatedTaskId TEXT,
+        uploadedBy TEXT,
+        uploadedAt TEXT,
+        policyNumber TEXT,
+        effectiveDate TEXT,
+        expiryDate TEXT,
+        clauses TEXT
+      );
+
+      -- 26. 态势指标定义表
+      CREATE TABLE IF NOT EXISTS metric_definitions (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        level TEXT NOT NULL DEFAULT 'customs_level',
+        isRecommended INTEGER DEFAULT 0,
+        config TEXT NOT NULL,
+        visibility TEXT DEFAULT 'all',
+        isSystem INTEGER DEFAULT 0,
+        sortOrder INTEGER DEFAULT 0
+      );
+
+      -- 27. 用户看板配置
+      CREATE TABLE IF NOT EXISTS user_dashboard_config (
+        userId TEXT PRIMARY KEY,
+        customsMetrics TEXT DEFAULT '[]',
+        sectionMetrics TEXT DEFAULT '[]',
+        tabs TEXT DEFAULT '[]',
+        activeTabId TEXT,
+        layout TEXT DEFAULT 'grid'
+      );
+
+      -- 28. 用户角色表
+      CREATE TABLE IF NOT EXISTS user_roles (
+        userId TEXT NOT NULL,
+        role TEXT NOT NULL,
+        scope TEXT,
+        PRIMARY KEY (userId, role)
       );
     `;
 
     try {
-      // 分解执行多条 SQL 语句
       const statements = schemaSql.split(';').filter(s => s.trim());
       for (const statement of statements) {
         this.db.run(statement);
       }
-      
-      // 检查旧表是否需要增补 dept_requirements 字段（针对从旧版升级的用户）
+
+      // ========== 向后兼容迁移（V3.0 强制迁移） ==========
+      const ensureColumn = (table: string, col: string, def: string) => {
+        try {
+          // 先检查列是否已存在
+          const colCheck = this.db!.exec(`PRAGMA table_info(${table})`);
+          if (colCheck.length > 0) {
+            const columns = colCheck[0].values.map((r: any) => r[1]);
+            if (columns.includes(col)) return; // 列已存在，跳过
+          }
+          this.db!.run(`ALTER TABLE ${table} ADD COLUMN ${col} ${def};`);
+          console.log(`[DB] 迁移: ${table}.${col} 添加成功`);
+        } catch (e: any) {
+          console.warn(`[DB] 迁移警告: ${table}.${col} 添加失败, 原因: ${e.message}`);
+        }
+      };
+
+      // tasks 表所有 V3.0 必需字段
+      const taskV3Columns: [string, string][] = [
+        ['dept_requirements', 'TEXT'], ['co_dept_requirements', 'TEXT'],
+        ['source', "TEXT DEFAULT 'OTHER'"], ['tags', "TEXT DEFAULT '[]'"],
+        ['handler_name', "TEXT DEFAULT ''"], ['is_key_task', 'INTEGER DEFAULT 0'],
+        ['taskTypeGroupId', 'TEXT'], ['taskTypeId', 'TEXT'], ['description', 'TEXT'],
+        ['responsibleMatrix', 'TEXT'], ['stagesSnapshot', 'TEXT'],
+        ['flowTemplateId', 'TEXT'], ['currentStageIndex', 'INTEGER DEFAULT 0'],
+        ['confirmedFeedback', 'TEXT'], ['dataSheetTemplateId', 'TEXT'],
+        ['dataSheetFields', 'TEXT'], ['dataSheetRows', 'TEXT'],
+        ['childAggregationMode', "TEXT DEFAULT 'none'"], ['aggregationRules', 'TEXT'],
+        ['snapshots', 'TEXT'], ['extractionConfig', 'TEXT'],
+        ['authorizedPeers', "TEXT DEFAULT '[]'"], ['sharedWith', "TEXT DEFAULT '[]'"],
+        ['createdBy', 'TEXT'], ['updatedAt', 'TEXT'],
+        ['starredBy', "TEXT DEFAULT '[]'"], ['activityLog', "TEXT DEFAULT '[]'"],
+        ['childTaskIds', "TEXT DEFAULT '[]'"],
+      ];
+      for (const [col, def] of taskV3Columns) {
+        ensureColumn('tasks', col, def);
+      }
+
+      // feedbacks / leader_comments / personnel 补全
+      for (const [col, def] of [['is_leader_instruction', 'INTEGER DEFAULT 0'], ['highlighted', 'INTEGER DEFAULT 0']]) {
+        ensureColumn('feedbacks', col, def);
+      }
+      for (const [col, def] of [['attachments', 'TEXT'], ['highlighted', 'INTEGER DEFAULT 0']]) {
+        ensureColumn('leader_comments', col, def);
+      }
+      const personnelV3Cols: [string, string][] = [
+        ['employeeNo', 'TEXT'], ['departmentId', 'TEXT'],
+        ['isLeader', 'INTEGER DEFAULT 0'], ['email', 'TEXT'],
+        ['isActive', 'INTEGER DEFAULT 1'], ['sortOrder', 'INTEGER DEFAULT 0'],
+      ];
+      for (const [col, def] of personnelV3Cols) {
+        ensureColumn('personnel', col, def);
+      }
+
+      // flow_templates 扩展（确保表存在）
       try {
-        this.db.run("ALTER TABLE tasks ADD COLUMN dept_requirements TEXT;");
-      } catch (e) { /* 字段已存在 */ }
+        this.db!.exec('SELECT count(*) FROM flow_templates');
+      } catch (_) {
+        // flow_templates 表不存在，创建它
+        this.db!.run(`CREATE TABLE IF NOT EXISTS flow_templates (
+          id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, scope TEXT,
+          stages TEXT, createdBy TEXT, isPublic INTEGER DEFAULT 1,
+          created_at TEXT, updatedAt TEXT
+        )`);
+      }
+      for (const [col, def] of [['stages', 'TEXT'], ['createdBy', 'TEXT'], ['isPublic', 'INTEGER DEFAULT 1'], ['updatedAt', 'TEXT']]) {
+        ensureColumn('flow_templates', col, def);
+      }
+      // 从旧的 process_templates 迁移到 flow_templates（如果没有 flow_templates 数据）
+      try {
+        const ftCount = this.db!.exec('SELECT count(*) as c FROM flow_templates');
+        const ptCount = this.db!.exec('SELECT count(*) as c FROM process_templates');
+        if (ftCount[0]?.values[0]?.[0] === 0 && ptCount[0]?.values[0]?.[0] > 0) {
+          this.db!.run(`INSERT INTO flow_templates (id, name, description, scope, created_at, isPublic)
+            SELECT id, name, description, scope, created_at, 1 FROM process_templates`);
+        }
+      } catch (_) { /* 迁移跳过 */ }
 
-      // 迁移：tasks 表新增字段
-      try { this.db.run("ALTER TABLE tasks ADD COLUMN source TEXT DEFAULT 'OTHER';"); } catch (e) { /* 已存在 */ }
-      try { this.db.run("ALTER TABLE tasks ADD COLUMN tags TEXT DEFAULT '[]';"); } catch (e) { /* 已存在 */ }
-      try { this.db.run("ALTER TABLE tasks ADD COLUMN handler_name TEXT DEFAULT '';"); } catch (e) { /* 已存在 */ }
-      try { this.db.run("ALTER TABLE tasks ADD COLUMN is_key_task INTEGER DEFAULT 0;"); } catch (e) { /* 已存在 */ }
+      // personnel 从 dept_id 同步 departmentId
+      try {
+        this.db!.run(`UPDATE personnel SET departmentId = dept_id WHERE departmentId IS NULL OR departmentId = ''`);
+        this.db!.run(`UPDATE personnel SET isLeader = is_dept_head WHERE isLeader = 0 AND is_dept_head = 1`);
+        this.db!.run(`UPDATE personnel SET employeeNo = id WHERE employeeNo IS NULL OR employeeNo = ''`);
+      } catch (_) { /* 迁移跳过 */ }
 
-      // 迁移：feedbacks 表新增字段
-      try { this.db.run("ALTER TABLE feedbacks ADD COLUMN is_leader_instruction INTEGER DEFAULT 0;"); } catch (e) { /* 已存在 */ }
-      try { this.db.run("ALTER TABLE feedbacks ADD COLUMN highlighted INTEGER DEFAULT 0;"); } catch (e) { /* 已存在 */ }
+      // departments 种子数据（如果表为空）
+      try {
+        const dCount = this.db!.exec("SELECT count(*) as c FROM departments");
+        if (dCount[0]?.values[0]?.[0] === 0) {
+          const deptSeeds = [
+            ["dept_01","第八派驻纪检组","纪检组",null,null,1,1],
+            ["dept_02","办公室（党委办公室）","办公室",null,null,2,1],
+            ["dept_03","人事政工科","人事政工",null,null,3,1],
+            ["dept_04","综合保障科","综合保障",null,null,4,1],
+            ["dept_05","综合业务一科","综合一",null,null,5,1],
+            ["dept_06","综合业务二科","综合二",null,null,6,1],
+            ["dept_07","查验一科","查验一",null,null,7,1],
+            ["dept_08","查验二科","查验二",null,null,8,1],
+            ["dept_09","查验三科","查验三",null,null,9,1],
+            ["dept_10","监控管理科","监控管理",null,null,10,1],
+            ["dept_11","物流监控科","物流监控",null,null,11,1],
+            ["dept_12","船舶清关科","船舶清关",null,null,12,1],
+            ["dept_13","船舶检查科","船舶检查",null,null,13,1],
+            ["dept_14","验估一科","验估一",null,null,14,1],
+            ["dept_15","验估二科","验估二",null,null,15,1],
+            ["dept_16","验估三科","验估三",null,null,16,1],
+            ["dept_17","跨境贸易便利化科","跨境贸易",null,null,17,1],
+          ];
+          const stmt = this.db!.prepare("INSERT INTO departments (id, name, shortName, parentId, leaderId, sortOrder, isActive) VALUES (?,?,?,?,?,?,?)");
+          for (const d of deptSeeds) { stmt.run(d); }
+          stmt.free();
+        }
+      } catch (_) { /* 种子已存在 */ }
 
-      // 迁移：leader_comments 表新增字段
-      try { this.db.run("ALTER TABLE leader_comments ADD COLUMN attachments TEXT;"); } catch (e) { /* 已存在 */ }
-      try { this.db.run("ALTER TABLE leader_comments ADD COLUMN highlighted INTEGER DEFAULT 0;"); } catch (e) { /* 已存在 */ }
+      // 创建旧 process_templates 兼容视图（如果 flow_templates 存在但 process_templates 为空）
+      try {
+        this.db!.exec("SELECT count(*) as c FROM process_templates");
+      } catch (_) {
+        this.db!.run(`CREATE TABLE IF NOT EXISTS process_templates (
+          id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, scope TEXT, created_at TEXT)`);
+        try {
+          this.db!.run(`INSERT INTO process_templates (id, name, description, scope, created_at)
+            SELECT id, name, description, scope, created_at FROM flow_templates`);
+        } catch (_2) { /* skip */ }
+      }
 
-      await this.persist(); // 结构初始化后存一次盘
-      console.log("督办系统数据库架构校验成功");
+      await this.persist();
+      console.log("[DB] V3.0 数据库架构校验成功 (28张表)");
     } catch (e) {
-      console.error("建表或迁移失败:", e);
+      console.error("[DB] 建表或迁移失败:", e);
     }
   }
 
@@ -535,18 +813,38 @@ public execute(sql: string, params: any[] = [], isRemote: boolean = false): void
       const values = keys.map((k) => data[k]);
       this.run(`UPDATE tasks SET ${setClauses} WHERE id = ?`, [...values, id]);
     } else {
+      const now = new Date().toISOString()
       this.run(
         `INSERT INTO tasks (id, parent_id, level, title, content, task_type, priority,
          owner_dept_ids, co_dept_ids, dept_requirements, co_dept_requirements,
-         deadline, status, progress, leader_instructions, is_history, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         deadline, status, progress, leader_instructions, is_history, created_at,
+         taskTypeGroupId, taskTypeId, description, responsibleMatrix, stagesSnapshot,
+         currentStageIndex, confirmedFeedback, dataSheetTemplateId, dataSheetFields,
+         dataSheetRows, childAggregationMode, aggregationRules, snapshots,
+         extractionConfig, authorizedPeers, sharedWith, createdBy, updatedAt,
+         starredBy, activityLog, source, tags, handler_name, is_key_task)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                 ?, ?, ?, ?, ?)`,
         [
           id, data.parent_id || null, data.level || 1, data.title || '', data.content || '',
-          data.task_type || '常规', data.priority || 'MEDIUM',
+          data.task_type || '常规', data.priority || 'normal',
           data.owner_dept_ids || '[]', data.co_dept_ids || '[]',
           data.dept_requirements || '{}', data.co_dept_requirements || '{}',
-          data.deadline || null, data.status || 'PENDING', data.progress || 0,
-          data.leader_instructions || null, data.is_history || 0, data.created_at || new Date().toISOString(),
+          data.deadline || null, data.status || 'pending', data.progress || 0,
+          data.leader_instructions || null, data.is_history || 0, data.created_at || now,
+          data.taskTypeGroupId || null, data.taskTypeId || null,
+          data.description || '', data.responsibleMatrix || '{"primary":[],"cooperative":[]}',
+          data.stagesSnapshot || null, data.currentStageIndex ?? 0,
+          data.confirmedFeedback || null, data.dataSheetTemplateId || null,
+          data.dataSheetFields || null, data.dataSheetRows || null,
+          data.childAggregationMode || 'none', data.aggregationRules || null,
+          data.snapshots || null, data.extractionConfig || null,
+          data.authorizedPeers || '[]', data.sharedWith || '[]',
+          data.createdBy || '', now,
+          data.starredBy || '[]', data.activityLog || '[]',
+          data.source || 'OTHER', data.tags || '[]',
+          data.handler_name || '', data.is_key_task ? 1 : 0,
         ],
       );
     }

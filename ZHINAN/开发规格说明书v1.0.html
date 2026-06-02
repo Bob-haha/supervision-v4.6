@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全系统页面开发规格书（终版）</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --sidebar-bg: #1a1d23;
+            --sidebar-text: #bcc3cd;
+            --sidebar-hover: #ffffff;
+            --sidebar-active: #4a90d9;
+            --content-bg: #ffffff;
+            --text: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --heading: #1a1d23;
+            --border: #e2e8f0;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --table-header: #f1f5f9;
+            --table-border: #e2e8f0;
+            --accent: #4a90d9;
+            --accent-light: #e8f0fb;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --font-mono: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', 'Menlo', monospace;
+            --font-sans: 'Inter', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            --sidebar-width: 280px;
+            --toc-width: 260px;
+            --scrollbar-width: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 24px;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            display: flex;
+            min-height: 100vh;
+            font-size: 15px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ========== 侧边栏 ========== */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--sidebar-bg);
+            color: var(--sidebar-text);
+            overflow-y: auto;
+            overflow-x: hidden;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+            scrollbar-width: thin;
+            scrollbar-color: #3a3d44 #1a1d23;
+        }
+        .sidebar::-webkit-scrollbar {
+            width: var(--scrollbar-width);
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: #1a1d23;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #3a3d44;
+            border-radius: 3px;
+        }
+        .sidebar-header {
+            padding: 22px 20px 16px 20px;
+            border-bottom: 1px solid #2a2d35;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            background: var(--sidebar-bg);
+            z-index: 2;
+        }
+        .sidebar-header h2 {
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            line-height: 1.4;
+        }
+        .sidebar-header .subtitle {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-top: 4px;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+        .sidebar-nav {
+            flex: 1;
+            padding: 10px 0 30px 0;
+            list-style: none;
+        }
+        .sidebar-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-nav li {
+            margin: 0;
+        }
+        .sidebar-nav a {
+            display: block;
+            padding: 7px 20px 7px 18px;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.18s ease;
+            border-left: 3px solid transparent;
+            line-height: 1.45;
+            letter-spacing: 0.2px;
+        }
+        .sidebar-nav a:hover {
+            color: var(--sidebar-hover);
+            background: rgba(255, 255, 255, 0.04);
+            border-left-color: #4a5568;
+        }
+        .sidebar-nav a.active {
+            color: #ffffff;
+            background: rgba(74, 144, 217, 0.15);
+            border-left-color: var(--sidebar-active);
+            font-weight: 600;
+        }
+        .sidebar-nav .toc-h2>a {
+            font-weight: 600;
+            padding-top: 9px;
+            padding-bottom: 9px;
+            font-size: 0.9rem;
+            color: #d1d5db;
+            letter-spacing: 0.3px;
+            margin-top: 2px;
+        }
+        .sidebar-nav .toc-h3>a {
+            padding-left: 28px;
+            font-size: 0.82rem;
+        }
+        .sidebar-nav .toc-h4>a {
+            padding-left: 40px;
+            font-size: 0.78rem;
+            color: #8b9099;
+        }
+        .sidebar-nav .toc-h4>a:hover {
+            color: #c4c9d1;
+        }
+        .sidebar-nav .divider {
+            height: 1px;
+            background: #2a2d35;
+            margin: 6px 16px;
+            opacity: 0.5;
+        }
+
+        /* ========== 主内容区 ========== */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-width: 0;
+            padding: 32px 40px 60px 40px;
+            max-width: 1000px;
+            width: 100%;
+        }
+        .content-wrapper {
+            background: var(--content-bg);
+            border-radius: 10px;
+            padding: 40px 44px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        /* ========== 标题层级 ========== */
+        .content-wrapper h1 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: var(--heading);
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+            line-height: 1.3;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .content-wrapper h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--heading);
+            margin-top: 36px;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            letter-spacing: -0.2px;
+            scroll-margin-top: 24px;
+        }
+        .content-wrapper h3 {
+            font-size: 1.15rem;
+            font-weight: 650;
+            color: #374151;
+            margin-top: 26px;
+            margin-bottom: 10px;
+            scroll-margin-top: 24px;
+            letter-spacing: -0.1px;
+        }
+        .content-wrapper h4 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            scroll-margin-top: 24px;
+        }
+        .content-wrapper h5 {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: #6b7280;
+            margin-top: 12px;
+            margin-bottom: 6px;
+        }
+        .content-wrapper p {
+            margin-bottom: 12px;
+            color: #374151;
+            line-height: 1.75;
+        }
+        .content-wrapper strong {
+            font-weight: 650;
+            color: #1f2937;
+        }
+        .content-wrapper a {
+            color: var(--accent);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .content-wrapper a:hover {
+            border-bottom-color: var(--accent);
+        }
+
+        /* ========== 表格 ========== */
+        .content-wrapper table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 20px 0;
+            font-size: 0.88rem;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        .content-wrapper thead th {
+            background: var(--table-header);
+            font-weight: 650;
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 2px solid #d1d5db;
+            color: #374151;
+            font-size: 0.82rem;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+        .content-wrapper tbody td {
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--table-border);
+            vertical-align: top;
+            color: #4b5563;
+        }
+        .content-wrapper tbody tr:hover {
+            background: #f9fafb;
+        }
+        .content-wrapper tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .content-wrapper td code,
+        .content-wrapper th code {
+            font-size: 0.8rem;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+
+        /* ========== 代码块 ========== */
+        .content-wrapper pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 18px 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 14px 0 18px 0;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 1.6;
+            scrollbar-width: thin;
+            scrollbar-color: #4a5568 #1e293b;
+        }
+        .content-wrapper pre::-webkit-scrollbar {
+            height: 5px;
+        }
+        .content-wrapper pre::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        .content-wrapper pre::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 4px;
+        }
+        .content-wrapper pre code {
+            font-family: var(--font-mono);
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: inherit;
+        }
+        .content-wrapper :not(pre)>code {
+            background: #f1f5f9;
+            color: #c7254e;
+            padding: 2px 7px;
+            border-radius: 3px;
+            font-family: var(--font-mono);
+            font-size: 0.84em;
+            white-space: nowrap;
+            border: 1px solid #e8ecf1;
+        }
+
+        /* ========== 列表 ========== */
+        .content-wrapper ul,
+        .content-wrapper ol {
+            margin: 8px 0 14px 0;
+            padding-left: 22px;
+        }
+        .content-wrapper li {
+            margin-bottom: 5px;
+            color: #374151;
+            line-height: 1.7;
+        }
+        .content-wrapper ul ul,
+        .content-wrapper ol ol,
+        .content-wrapper ul ol,
+        .content-wrapper ol ul {
+            margin: 4px 0 6px 0;
+        }
+        .content-wrapper blockquote {
+            border-left: 4px solid var(--accent);
+            background: var(--accent-light);
+            margin: 14px 0;
+            padding: 12px 18px;
+            border-radius: 0 6px 6px 0;
+            color: #3b5998;
+            font-style: italic;
+        }
+
+        /* ========== 分隔线 ========== */
+        .content-wrapper hr {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 28px 0;
+        }
+
+        /* ========== ASCII 图示 ========== */
+        .ascii-box {
+            background: #fafbfc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin: 12px 0 18px 0;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
+            color: #374151;
+            scrollbar-width: thin;
+        }
+
+        /* ========== 响应式 ========== */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 240px;
+                --sidebar-width: 240px;
+            }
+            .main-content {
+                margin-left: 240px;
+                padding: 20px 16px;
+            }
+            .content-wrapper {
+                padding: 24px 18px;
+            }
+            .content-wrapper h1 {
+                font-size: 1.5rem;
+            }
+            .content-wrapper h2 {
+                font-size: 1.2rem;
+            }
+            .content-wrapper table {
+                font-size: 0.76rem;
+            }
+            .content-wrapper thead th,
+            .content-wrapper tbody td {
+                padding: 6px 8px;
+            }
+        }
+        @media (max-width: 640px) {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 12px 8px;
+            }
+            .content-wrapper {
+                padding: 16px 12px;
+                border-radius: 6px;
+            }
+            .content-wrapper pre {
+                padding: 10px 12px;
+                font-size: 0.72rem;
+            }
+        }
+
+        /* ========== 打印样式 ========== */
+        @media print {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 0;
+            }
+            .content-wrapper {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+            }
+        }
+
+        /* 高亮动画 */
+        @keyframes highlight-flash {
+            0% {
+                background-color: #fef3c7;
+            }
+            100% {
+                background-color: transparent;
+            }
+        }
+        .content-wrapper :target {
+            animation: highlight-flash 1.5s ease-out;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ==================== 侧边栏导航 ==================== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>开发规格书</h2>
+            <div class="subtitle">全系统页面 · 终版</div>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="toc-h2"><a href="#section-1">1. 首页看板（/home）</a></li>
+                <li class="toc-h3"><a href="#section-1-1">1.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-1-2">1.2 组件拆分</a></li>
+                <li class="toc-h3"><a href="#section-1-3">1.3 关区业务态势</a></li>
+                <li class="toc-h4"><a href="#section-1-3-1">1.3.1 显示权限</a></li>
+                <li class="toc-h4"><a href="#section-1-3-2">1.3.2 指标卡片区</a></li>
+                <li class="toc-h4"><a href="#section-1-3-3">1.3.3 标签页系统</a></li>
+                <li class="toc-h4"><a href="#section-1-3-4">1.3.4 领导批示置顶区</a></li>
+                <li class="toc-h3"><a href="#section-1-4">1.4 科级业务态势</a></li>
+                <li class="toc-h3"><a href="#section-1-5">1.5 个人工作台</a></li>
+                <li class="toc-h3"><a href="#section-1-6">1.6 数据监听与刷新策略</a></li>
+                <li class="toc-h3"><a href="#section-1-7">1.7 异常处理与边界</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-2">2. 新建任务页（/task/new）</a></li>
+                <li class="toc-h3"><a href="#section-2-1">2.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-2-2">2.2 组件拆分</a></li>
+                <li class="toc-h3"><a href="#section-2-3">2.3 功能点</a></li>
+                <li class="toc-h3"><a href="#section-2-4">2.4 提交流程</a></li>
+                <li class="toc-h3"><a href="#section-2-5">2.5 状态与异常</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-3">3. 任务详情页（/task/:id）</a></li>
+                <li class="toc-h3"><a href="#section-3-1">3.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-3-2">3.2 组件拆分与数据流</a></li>
+                <li class="toc-h3"><a href="#section-3-3">3.3 区域一：任务头栏</a></li>
+                <li class="toc-h3"><a href="#section-3-4">3.4 区域二：责任矩阵</a></li>
+                <li class="toc-h3"><a href="#section-3-5">3.5 区域三：环节流程</a></li>
+                <li class="toc-h3"><a href="#section-3-6">3.6 区域四：子任务区域</a></li>
+                <li class="toc-h3"><a href="#section-3-7">3.7 区域五：动态与批示区</a></li>
+                <li class="toc-h3"><a href="#section-3-8">3.8 区域六：数据明细区</a></li>
+                <li class="toc-h3"><a href="#section-3-9">3.9 提取配置面板</a></li>
+                <li class="toc-h3"><a href="#section-3-10">3.10 数据持久化与权限</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-4">4. 我的任务列表页（/task/my）</a></li>
+                <li class="toc-h3"><a href="#section-4-1">4.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-4-2">4.2 组件拆分</a></li>
+                <li class="toc-h3"><a href="#section-4-3">4.3 功能点</a></li>
+                <li class="toc-h3"><a href="#section-4-4">4.4 交互细节</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-5">5. 督办看板页（/inspector）</a></li>
+                <li class="toc-h3"><a href="#section-5-1">5.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-5-2">5.2 组件拆分</a></li>
+                <li class="toc-h3"><a href="#section-5-3">5.3 多维度筛选</a></li>
+                <li class="toc-h3"><a href="#section-5-4">5.4 结果列表</a></li>
+                <li class="toc-h3"><a href="#section-5-5">5.5 汇总统计</a></li>
+                <li class="toc-h3"><a href="#section-5-6">5.6 导出报表</a></li>
+                <li class="toc-h3"><a href="#section-5-7">5.7 催办操作</a></li>
+                <li class="toc-h3"><a href="#section-5-8">5.8 权限控制</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-6">6. 流程配置页（/config/flow）</a></li>
+                <li class="toc-h3"><a href="#section-6-1">6.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-6-2">6.2 组件拆分</a></li>
+                <li class="toc-h3"><a href="#section-6-3">6.3 功能点</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-7">7. 明细模板配置页（/config/datasheet）</a></li>
+                <li class="toc-h3"><a href="#section-7-1">7.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-7-2">7.2 功能点</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-8">8. 字段管理页（/config/fields）</a></li>
+                <li class="toc-h3"><a href="#section-8-1">8.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-8-2">8.2 功能点</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-9">9. 态势配置页（/config/metrics）</a></li>
+                <li class="toc-h3"><a href="#section-9-1">9.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-9-2">9.2 组件拆分</a></li>
+                <li class="toc-h3"><a href="#section-9-3">9.3 指标配置数据模型</a></li>
+                <li class="toc-h3"><a href="#section-9-4">9.4 筛选模式双选机制</a></li>
+                <li class="toc-h3"><a href="#section-9-5">9.5 聚合规则</a></li>
+                <li class="toc-h3"><a href="#section-9-6">9.6 保存与删除</a></li>
+                <li class="toc-h3"><a href="#section-9-7">9.7 首页对接</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-10">10. 文件管理页（/config/files）</a></li>
+                <li class="toc-h3"><a href="#section-10-1">10.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-10-2">10.2 功能点</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#section-11">11. 类型与标签配置页（/config/types）</a></li>
+                <li class="toc-h3"><a href="#section-11-1">11.1 页面概述</a></li>
+                <li class="toc-h3"><a href="#section-11-2">11.2 功能点</a></li>
+                <li class="divider"></li>
+                <li class="toc-h2"><a href="#appendix">附录：关键调整与角色验证摘要</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- ==================== 主内容区 ==================== -->
+    <main class="main-content">
+        <div class="content-wrapper">
+
+            <!-- 文档大标题 -->
+            <h1 id="top">全系统页面开发规格书（终版）</h1>
+            <p style="color:#6b7280;font-size:0.9rem;margin-bottom:24px;">
+                本文档整合所有前端页面的详细开发规格，并应用了全面对照分析后的修正与调整。内容包括：首页看板、新建任务、任务详情、我的任务列表、督办看板，以及流程配置、明细模板配置、字段管理、态势配置、文件管理、类型与标签配置等配置管理页面。每个页面的数据、交互、状态管理和权限边界均已明确，可直接指导开发。
+            </p>
+
+            <hr>
+
+            <!-- ==================== 1. 首页看板 ==================== -->
+            <h2 id="section-1">1. 首页看板（ <code>/home</code> ）</h2>
+
+            <h3 id="section-1-1">1.1 页面概述</h3>
+            <p>首页看板是系统的信息中枢与个人工作入口，包含三个区域：</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>区域</th>
+                        <th>可见范围</th>
+                        <th>核心内容</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>关区业务态势</td>
+                        <td>关领导、督办员（职位包含"关长/副关长"或 <code>user_roles.role=inspector</code>）</td>
+                        <td>关级指标卡片、多标签页任务列表、领导批示置顶</td>
+                    </tr>
+                    <tr>
+                        <td>科级业务态势</td>
+                        <td>当前用户所在科室所有人员（<code>departmentId</code> 相同）</td>
+                        <td>本科室指标卡片、多标签页任务列表、科长关注置顶</td>
+                    </tr>
+                    <tr>
+                        <td>个人工作台</td>
+                        <td>所有用户</td>
+                        <td>待办、关注、我发起的、送阅、提取任务五个标签页</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>所有数据从本地 IndexedDB 获取，前端聚合计算呈现，不产生后端请求。P2P 同步只负责将授权任务推送到本地。</p>
+
+            <h3 id="section-1-2">1.2 组件拆分</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>组件文件</th>
+                        <th>作用</th>
+                        <th>复用关系</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>views/Home.vue</code></td><td>页面容器，组合三个区域</td><td>-</td></tr>
+                    <tr><td><code>components/dashboard/MetricCards.vue</code></td><td>指标卡片网格，点击穿透</td><td>关区、科级复用</td></tr>
+                    <tr><td><code>components/dashboard/BrowserTabs.vue</code></td><td>类浏览器标签页栏（新建、关闭、重命名）</td><td>关区、科级复用</td></tr>
+                    <tr><td><code>components/dashboard/TaskList.vue</code></td><td>任务列表（动态列、预警标记、行操作）</td><td>三个区域均复用</td></tr>
+                    <tr><td><code>components/dashboard/LeaderCommentBar.vue</code></td><td>领导批示置顶区</td><td>仅关区态势使用</td></tr>
+                    <tr><td><code>components/dashboard/SectionFocusBar.vue</code></td><td>科长关注置顶区</td><td>仅科级态势使用</td></tr>
+                    <tr><td><code>components/workbench/PersonalWorkbench.vue</code></td><td>个人工作台整体（含标签页）</td><td>-</td></tr>
+                    <tr><td><code>components/common/ColumnSelectModal.vue</code></td><td>列选弹窗</td><td>-</td></tr>
+                    <tr><td><code>components/common/AdvancedFilterModal.vue</code></td><td>高级筛选 + 排序 + 汇总</td><td>-</td></tr>
+                    <tr><td><code>components/common/MetricConfigModal.vue</code></td><td>个人自定义指标选择</td><td>接收 <code>level</code> 属性区分关/科</td></tr>
+                    <tr><td><code>components/common/PersonSelector.vue</code></td><td>人员/部门选择器（用于批量送阅）</td><td>-</td></tr>
+                </tbody>
+            </table>
+
+            <h3 id="section-1-3">1.3 关区业务态势（ <code>CustomsDashboard</code> 组件）</h3>
+
+            <h4 id="section-1-3-1">1.3.1 显示权限</h4>
+            <ul>
+                <li><strong>显示条件</strong>（任一满足即显示整个 <code>#customs-card</code>）：
+                    <ul>
+                        <li>当前用户 <code>position</code> 字段包含"关长"或"副关长"；</li>
+                        <li>当前用户在 <code>user_roles</code> 表中有记录且 <code>role = 'inspector'</code>。</li>
+                    </ul>
+                </li>
+                <li>权限判断在 Vue 组件 <code>computed</code> 中根据 Pinia 用户 store 计算。</li>
+            </ul>
+
+            <h4 id="section-1-3-2">1.3.2 指标卡片区</h4>
+            <p><strong>数据准备</strong></p>
+            <ul>
+                <li>从 <code>metric_definitions</code> 表筛选 <code>level = 'customs_level'</code> 且 <code>visibility</code> 允许当前用户查看的指标。
+                    <ul>
+                        <li><code>visibility</code> 取值：<code>'all'</code> 所有人可见；<code>'role:leader'</code> 仅关领导；<code>'role:inspector'</code> 仅督办员。关领导可查看 <code>inspector</code> 指标（按业务逻辑配置）。</li>
+                    </ul>
+                </li>
+                <li>当前用户自定义指标从 <code>user_dashboard_config</code> 的 <code>customsMetrics</code> 数组获取，若该数组为空或未配置，则使用系统推荐指标（<code>isRecommended = true</code>）。</li>
+                <li>最终展示的指标 = 自定义列表中存在的指标ID ∩ 用户有权限访问的指标。</li>
+            </ul>
+            <p><strong>聚合计算</strong></p>
+            <p>每个指标卡片的值由以下步骤实时计算：</p>
+            <ol>
+                <li>读取指标定义的 <code>config</code> 对象。</li>
+                <li>根据 <code>config.mode</code> 区分数据筛选方式：
+                    <ul>
+                        <li><strong>按条件筛选</strong>（<code>mode='filter'</code>）：使用 <code>taskTypeIds</code>、<code>filterTags</code>、<code>timeRange</code> 条件从 <code>tasks</code> 表筛选。</li>
+                        <li><strong>指定具体任务</strong>（<code>mode='specific'</code>）：通过 <code>specificTaskIds</code> 直接从 <code>tasks</code> 表获取指定任务。</li>
+                    </ul>
+                </li>
+                <li>排除已归档任务（<code>status != 'archived'</code>）。</li>
+                <li>对筛选出的任务集合，根据 <code>config.fieldId</code> 和 <code>config.aggFunc</code> 聚合：
+                    <ul>
+                        <li><code>fieldId = '__task_count__'</code> 时统计任务总数（<code>COUNT</code>）。</li>
+                        <li>否则遍历任务的 <code>dataSheetRows</code>，取出指定字段值（忽略不存在的字段），应用聚合函数（<code>SUM</code>、<code>AVG</code>、<code>MAX</code>、<code>MIN</code>、<code>COUNT</code>）。</li>
+                    </ul>
+                </li>
+                <li>计算环比变化（可选）：对比上一周期值。</li>
+            </ol>
+            <p><strong>卡片渲染</strong></p>
+            <ul>
+                <li>使用 <code>MetricCards</code> 组件，传入指标数组。</li>
+                <li>每个卡片结构：</li>
+            </ul>
+            <pre><code>&lt;div class="data-card" @click="openDrillDown(metric)"&gt;
+    &lt;div class="label"&gt;{{ metric.name }}&lt;/div&gt;
+    &lt;div class="value"&gt;{{ formattedValue }}&lt;/div&gt;
+    &lt;div class="sub"&gt;{{ changeDescription }}&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+            <ul>
+                <li>数值自动格式化（万/亿或千分位）。</li>
+                <li>鼠标悬停显示完整数字 tooltip。</li>
+            </ul>
+            <p><strong>点击穿透</strong></p>
+            <ul>
+                <li>点击卡片数值区域，打开 <code>DrillDownModal</code> 组件。</li>
+                <li>模态框标题：<code>指标名称 - 构成明细</code></li>
+                <li>内容：使用 <code>TaskList</code> 组件（只读模式）展示所有聚合到的任务，列固定为任务标题、部门、当前环节、时限、预警标记。</li>
+                <li>点击某行跳转到任务详情页 <code>/task/:id</code>。</li>
+                <li>模态框底部显示任务总数。</li>
+            </ul>
+            <p><strong>个性化配置</strong></p>
+            <ul>
+                <li>指标卡片区右上角按钮"自定义指标"。</li>
+                <li>点击打开 <code>MetricConfigModal</code>，接收 <code>level="customs"</code>：
+                    <ul>
+                        <li>左侧列出当前用户有权查看的关级指标（带复选框）。</li>
+                        <li>右侧为已选列表（可拖拽排序）。</li>
+                        <li>保存时更新 <code>user_dashboard_config</code> 的 <code>customsMetrics</code> 数组（只存指标ID），并触发 P2P 同步配置。</li>
+                        <li>关闭后立即刷新卡片区。</li>
+                    </ul>
+                </li>
+            </ul>
+            <p><strong>自动刷新</strong></p>
+            <ul>
+                <li><code>onMounted</code> 时启动定时器，每 30 秒调用一次聚合更新。</li>
+                <li>监听 P2P 数据变更事件（<code>p2p-data-updated</code>），若涉及 <code>tasks</code> 表则立即重新聚合。</li>
+                <li>使用 <code>watchEffect</code> 跟踪用户配置变化。</li>
+                <li>组件卸载时清除定时器和事件监听。</li>
+            </ul>
+
+            <h4 id="section-1-3-3">1.3.3 标签页系统</h4>
+            <p><strong>标签页数据模型</strong></p>
+            <p>存储于 <code>user_dashboard_config.tabs</code> 数组中（<code>type = 'customs_task_list'</code>）。结构：</p>
+            <pre><code>{
+                "id": "UUID",
+                "label": "标签名称",
+                "type": "customs_task_list",
+                "config": {
+                "columns": ["title", "taskType", "tags", "department", "deadline", "progress"],
+                "filters": {
+                "taskTypeIds": [],
+                "statuses": [],
+                "tagIds": [],
+                "departmentIds": [],
+                "keyword": "",
+                "timeRange": { "start": null, "end": null }
+                },
+                "sortBy": { "field": "deadline", "order": "asc" },
+                "isDefault": false
+                }
+            }</code></pre>
+            <p><strong>系统预置标签页</strong>（不可删除）：</p>
+            <ol>
+                <li><strong>全部任务</strong>：无筛选，显示所有有权任务（关闭按钮隐藏）。</li>
+                <li><strong>年度重点任务</strong>：筛选 <code>taskTypeIds</code> 包含"年度重点任务"类型ID。</li>
+                <li><strong>领导关注</strong>：筛选 <code>priority = 'leadership_attention'</code>。</li>
+                <li><strong>逾期/临期</strong>：筛选逾期或临期任务（截止日期已过或7天内到期）。</li>
+            </ol>
+            <p><strong>交互</strong></p>
+            <ul>
+                <li><strong>新建</strong>：点击 <code>+</code> 按钮 → 命名 → 插入到 <code>tabs</code> 数组，设为激活，保存配置。</li>
+                <li><strong>切换</strong>：点击标签更新 <code>activeTabId</code>，重新渲染任务列表。</li>
+                <li><strong>重命名</strong>：悬浮编辑按钮，内联编辑修改 <code>label</code>。</li>
+                <li><strong>关闭</strong>：删除标签对象，若关闭当前激活标签则激活相邻；若只剩一个且不可关闭，则不做操作。</li>
+                <li>所有操作后持久化 <code>user_dashboard_config</code>。</li>
+            </ul>
+            <p><strong>列选配置</strong></p>
+            <ul>
+                <li>"列选"按钮打开 <code>ColumnSelectModal</code>，可选列池从系统预定义字段中读取，用户勾选后更新当前激活标签的 <code>config.columns</code>。</li>
+            </ul>
+            <p><strong>高级筛选</strong></p>
+            <ul>
+                <li>"高级配置"按钮打开 <code>AdvancedFilterModal</code>，提供任务类型、状态、标签、部门、时间范围、关键词等筛选，以及排序规则。</li>
+                <li>底部实时预览符合条件任务数和逾期任务数。</li>
+                <li>应用后将条件写入当前标签的 <code>config.filters</code> 和 <code>config.sortBy</code>，保存配置。</li>
+            </ul>
+            <p><strong>任务列表渲染</strong></p>
+            <ul>
+                <li>使用 <code>TaskList</code> 组件，接收过滤条件、排序列、可见列等 props。</li>
+                <li>从 <code>tasks</code> 表查询任务，应用过滤、排序，动态展示列。</li>
+                <li>每行显示预警灯、标签、各列数据。行点击跳转详情。</li>
+                <li>右侧操作按钮（仅当用户有权限时显示）：
+                    <ul>
+                        <li><strong>批示</strong>（关领导可见）：弹出输入框，提交后调用 <code>addLeaderComment(taskId, content)</code> 方法，向任务的 <code>activityLog</code> 数组追加一条 <code>type='leader_comment'</code> 的记录，并记录批示人和时间。</li>
+                        <li><strong>催办</strong>（督办员可见）：打开催办弹窗，可输入催促留言，向任务动态区插入一条 <code>type='urge'</code> 的记录。</li>
+                        <li><strong>详情</strong>：跳转。</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h4 id="section-1-3-4">1.3.4 领导批示置顶区</h4>
+            <ul>
+                <li>组件 <code>LeaderCommentBar</code>，嵌入标签页栏下方、任务列表上方。</li>
+                <li><strong>数据源</strong>（调整后）：查询 <code>tasks</code> 表，筛选当前用户可见任务，检查 <code>activityLog</code> 数组中是否存在 <code>type='leader_comment'</code> 且 <code>timestamp</code> 在近 7 天内的记录。按时间倒序排列。</li>
+                <li>每条显示：
+                    <ul>
+                        <li>任务标题（可点击跳转）</li>
+                        <li>当前环节</li>
+                        <li>最新批示摘要（截取前 50 字）</li>
+                        <li>批示人和时间</li>
+                    </ul>
+                </li>
+                <li>若无批示，隐藏该区域。</li>
+                <li>点击跳转任务详情并定位到批示动态。</li>
+            </ul>
+
+            <h3 id="section-1-4">1.4 科级业务态势（ <code>SectionDashboard</code> 组件）</h3>
+            <h4>1.4.1 显示权限</h4>
+            <ul>
+                <li>所有用户，只要所属部门有效（<code>personnel.departmentId</code> 非空）即显示。</li>
+                <li>数据范围：所有聚合和任务列表均限制为本部门（通过 <code>departmentId</code> 过滤）。</li>
+            </ul>
+            <h4>1.4.2 指标卡片区</h4>
+            <ul>
+                <li>从 <code>metric_definitions</code> 读取 <code>level = 'section_level'</code> 的指标定义，并校验 <code>visibility</code>（若配置为仅科长可见，则检查当前用户是否为本科室负责人）。</li>
+                <li>自定义指标：从 <code>user_dashboard_config.sectionMetrics</code> 数组读取。点击"自定义指标"打开 <code>MetricConfigModal</code>，传入 <code>level="section"</code>。</li>
+                <li>聚合计算：筛选 <code>tasks</code> 时，增加条件：任务的责任矩阵中 <code>primary</code> 或 <code>cooperative</code> 任一 <code>departmentId</code> 等于当前用户所属部门ID。</li>
+                <li>其他交互同关区态势。</li>
+            </ul>
+            <h4>1.4.3 标签页系统</h4>
+            <ul>
+                <li>独立存储，<code>type = 'section_task_list'</code>。</li>
+                <li>默认标签页：全部、科长关注、临期/逾期。</li>
+                <li>用户可自定义，逻辑一致。</li>
+            </ul>
+            <h4>1.4.4 任务列表</h4>
+            <ul>
+                <li>自动过滤本科室任务（主办或协办部门为本部门）。</li>
+                <li>列表显示主办/协办标识（增加"角色"列），显示当前环节、预警状态。</li>
+            </ul>
+            <h4>1.4.5 科长关注置顶区</h4>
+            <ul>
+                <li>组件 <code>SectionFocusBar</code>。</li>
+                <li>数据源：从 <code>tasks</code> 表中筛选 <code>starredBy</code> 包含本部门 <code>isLeader=true</code> 的人员ID的任务，且状态未完成。</li>
+                <li>若非科长，只读查看；科长可在此快速添加/取消关注（点击星标）。</li>
+                <li>若无关注任务，隐藏。</li>
+            </ul>
+
+            <h3 id="section-1-5">1.5 个人工作台（ <code>PersonalWorkbench</code> 组件）</h3>
+            <h4>1.5.1 整体设计</h4>
+            <ul><li>五个标签页使用自定义标签组件。每个标签页对应一个子组件。</li></ul>
+            <h4>1.5.2 待办任务标签页</h4>
+            <ul>
+                <li>查询条件：<code>responsibleMatrix</code> 中 <code>personnelId</code> 等于当前 <code>peerId</code>，且状态为 <code>pending</code> 或 <code>in_progress</code>。</li>
+                <li>列表每行显示：任务标题、来源标签、当前环节名称、时限 + 预警标记、最新动态摘要。</li>
+                <li>若用户在同一任务中既有主办又有协办，显示为一条记录，角色显示"主办/协办"。</li>
+                <li>点击行跳转详情。支持复选框和批量送阅。</li>
+            </ul>
+            <h4>1.5.3 关注任务标签页</h4>
+            <ul><li>筛选 <code>starredBy</code> 包含当前 <code>peerId</code>。置顶显示 <code>priority = 'leadership_attention'</code> 的任务。支持批量送阅。</li></ul>
+            <h4>1.5.4 我发起的任务</h4>
+            <ul><li>筛选 <code>createdBy === currentPeerId</code>。按状态分组展示（进行中、已完成）。批量送阅可用。</li></ul>
+            <h4>1.5.5 送阅任务</h4>
+            <ul><li>筛选 <code>sharedWith</code> 包含当前 <code>peerId</code>。仅提供"详情"按钮，不可批量操作。</li></ul>
+            <h4>1.5.6 我的提取任务</h4>
+            <ul>
+                <li>筛选 <code>extractionConfig</code> 不为空且 <code>extractionConfig.executorId === currentPeerId</code>。</li>
+                <li>列表上方显示批量操作栏："一键登录全部"、"批量手动提取"。</li>
+                <li>每个任务列表项显示：标题、目标URL、状态指示灯、最近提取时间、下次提取时间。</li>
+                <li>操作按钮：一键登录、手动提取、启用/禁用自动提取。</li>
+                <li>提取结果更新通过 P2P 同步回本地，动态区自动添加记录。</li>
+            </ul>
+            <h4>1.5.7 批量送阅</h4>
+            <ul>
+                <li>在待办、关注、我发起等标签页的任务列表中，每行有复选框。</li>
+                <li>顶部工具栏显示"批量送阅"按钮，显示已选数量。</li>
+                <li>点击打开 <code>PersonSelector</code> 模态框，支持多选人员。</li>
+                <li>确认后，遍历勾选任务，将选中人员的 <code>peerId</code> 添加到 <code>sharedWith</code> 数组（去重），保存任务。</li>
+                <li>提示"已成功送阅给 N 人"，触发 P2P 同步。</li>
+            </ul>
+
+            <h3 id="section-1-6">1.6 数据监听与刷新策略</h3>
+            <table>
+                <thead>
+                    <tr><th>事件</th><th>触发时机</th><th>影响范围</th><th>实现</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>P2P数据同步</td><td>远程任务数据写入本地 IndexedDB</td><td>所有区域的指标卡片和任务列表</td><td>全局事件 <code>p2p-data-updated</code>，监听 <code>tasks</code> 表变更，触发对应组件刷新</td></tr>
+                    <tr><td>用户配置变更</td><td>自定义指标、标签页修改保存</td><td>当前页面相应区域</td><td>直接调用刷新方法</td></tr>
+                    <tr><td>扩展提取结果更新</td><td>扩展通过 P2P 更新了 <code>tasks</code> 表</td><td>提取任务列表、关联任务动态</td><td>同上</td></tr>
+                    <tr><td>定时器</td><td>每30秒</td><td>指标卡片数值重算（不重新请求数据）</td><td><code>setInterval</code></td></tr>
+                </tbody>
+            </table>
+            <p><strong>优化</strong>：</p>
+            <ul>
+                <li>聚合计算使用 Dexie 索引加速（<code>taskTypeId</code>, <code>tags</code>, <code>departmentId</code>, <code>deadline</code>）。</li>
+                <li>任务列表若数据量大（>200），使用虚拟滚动。</li>
+                <li>指标卡片计算采用缓存，比较 <code>tasks</code> 表的 <code>updatedAt</code> 最大值避免重复计算。</li>
+            </ul>
+
+            <h3 id="section-1-7">1.7 异常处理与边界</h3>
+            <ul>
+                <li>指标计算错误：显示"--"，控制台输出详细错误。</li>
+                <li>配置丢失：自动使用默认配置（预置标签页，显示推荐指标）。</li>
+                <li>扩展通信失败：提示"浏览器扩展未启动或未连接"。</li>
+                <li>权限数据缺失：按最低权限处理。</li>
+                <li>标签页关闭最后一个：按钮失效，提示"至少保留一个标签页"。</li>
+            </ul>
+
+            <hr>
+
+            <!-- ==================== 2. 新建任务页 ==================== -->
+            <h2 id="section-2">2. 新建任务页（ <code>/task/new</code> ）</h2>
+
+            <h3 id="section-2-1">2.1 页面概述</h3>
+            <p>所有用户均可访问。通过表单填写基本信息、指派责任人、挂载流程和明细模板、预分配子任务，创建后写入 IndexedDB，并通过 P2P 同步给所有 <code>authorizedPeers</code>。</p>
+
+            <h3 id="section-2-2">2.2 组件拆分</h3>
+            <table>
+                <thead><tr><th>组件</th><th>文件</th><th>说明</th></tr></thead>
+                <tbody>
+                    <tr><td><code>views/NewTask.vue</code></td><td>页面容器</td><td>管理整个创建流程</td></tr>
+                    <tr><td><code>components/task/TaskBasicInfo.vue</code></td><td>表单区块：标题、描述、时限、优先级、来源</td><td></td></tr>
+                    <tr><td><code>components/task/CascadeSelect.vue</code></td><td>级联选择器（通用：一级→二级）</td><td>用于任务类型和标签</td></tr>
+                    <tr><td><code>components/task/PersonnelDeptSelector.vue</code></td><td>主办/协办部门人员选择器</td><td>树形部门→人员多选</td></tr>
+                    <tr><td><code>components/task/TemplatePreview.vue</code></td><td>流程步骤和明细表预览</td><td></td></tr>
+                    <tr><td><code>components/task/SubtaskPreAllocator.vue</code></td><td>子任务预分配列表（动态添加行）</td><td>核心复用组件</td></tr>
+                    <tr><td><code>components/task/ExtractionConfigInline.vue</code></td><td>外部提取配置区块</td><td>可折叠</td></tr>
+                </tbody>
+            </table>
+
+            <h3 id="section-2-3">2.3 功能点</h3>
+            <h4>2.3.1 基础信息录入</h4>
+            <table>
+                <thead><tr><th>字段</th><th><code>tasks</code> 字段</th><th>控件</th><th>必填</th><th>说明</th></tr></thead>
+                <tbody>
+                    <tr><td>任务标题</td><td><code>title</code></td><td><code>&lt;input&gt;</code></td><td>是</td><td>最大长度 100</td></tr>
+                    <tr><td>任务描述</td><td><code>description</code></td><td><code>&lt;textarea&gt;</code></td><td>否</td><td>V1 纯文本</td></tr>
+                    <tr><td>截止日期</td><td><code>deadline</code></td><td><code>&lt;input type="date"&gt;</code></td><td>否</td><td></td></tr>
+                    <tr><td>优先级</td><td><code>priority</code></td><td>单选按钮组</td><td>是</td><td><code>normal</code>/<code>urgent</code>/<code>leadership_attention</code>，默认 <code>normal</code></td></tr>
+                    <tr><td>任务来源</td><td><code>source</code></td><td>动态</td><td>否</td><td>结构 <code>{type, reference}</code>，手动创建 type 默认 <code>manual</code></td></tr>
+                </tbody>
+            </table>
+            <h4>2.3.2 任务类型级联选择</h4>
+            <ul>
+                <li>数据源：<code>task_type_groups</code>（一级）→ <code>task_types</code>（二级）。</li>
+                <li>两个并排 <code>&lt;select&gt;</code>，选择二级类型后自动获取默认流程模板和明细模板ID，并在预览区域显示默认步骤/表头。</li>
+                <li>若无默认模板，预览区提示"该类型无默认流程/明细模板"，用户仍可手动选择。</li>
+            </ul>
+            <h4>2.3.3 标签多选</h4>
+            <ul>
+                <li>数据源：<code>tag_groups</code> → <code>tags</code>。</li>
+                <li>使用级联选择，第二个下拉改为多选，已选标签以标签形式展示，可逐个删除。存储为 <code>tags</code> 数组（标签ID）。</li>
+            </ul>
+            <h4>2.3.4 主办/协办部门人员指派</h4>
+            <ul>
+                <li>使用 <code>PersonnelDeptSelector</code> 树形选择。先选部门，再选人员（可缺省人员）。主办至少选择一个部门。</li>
+                <li>存储为 <code>responsibleMatrix</code>；提交时自动计算 <code>authorizedPeers</code>。</li>
+            </ul>
+            <h4>2.3.5~2.3.9 其余功能点</h4>
+            <p>包括流程模板选择、明细模板选择、子任务预分配（使用 <code>SubtaskPreAllocator</code> 组件，折叠区域默认收起，支持动态添加/删除行，可继承父任务流程/明细）、任务来源标记、外部数据提取配置等，详见完整规格书。</p>
+
+            <h3 id="section-2-4">2.4 提交流程</h3>
+            <ol>
+                <li>验证：标题不为空，主办至少一个部门。</li>
+                <li>构建任务对象，生成 UUID。</li>
+                <li>写入 <code>tasks</code> 表。</li>
+                <li>循环创建子任务（若有），建立 <code>task_relations</code>，更新父子任务关系，合并 <code>authorizedPeers</code>。</li>
+                <li>触发 P2P 同步。提示"任务创建成功"，跳转 <code>/task/:id</code>。</li>
+            </ol>
+
+            <h3 id="section-2-5">2.5 状态与异常</h3>
+            <ul>
+                <li>加载状态：全局遮罩，待类型、标签、部门、人员数据加载完成后显示表单。</li>
+                <li>下拉数据加载失败：对应下拉置灰，显示"加载失败"并提供重试。</li>
+                <li>提交中：按钮 loading，防止重复提交。</li>
+                <li>提交失败：提示"任务创建失败，请重试"，记录错误日志。</li>
+            </ul>
+
+            <hr>
+
+            <!-- ==================== 3. 任务详情页 ==================== -->
+            <h2 id="section-3">3. 任务详情页（ <code>/task/:id</code> ）</h2>
+
+            <h3 id="section-3-1">3.1 页面概述</h3>
+            <p>所有授权用户（<code>authorizedPeers</code> 及 <code>sharedWith</code>）均可访问。页面划分六个区域：任务头栏、责任矩阵、环节流程、子任务区域、动态与批示区、数据明细区。所有操作直接修改 <code>tasks</code> 表并触发 P2P 同步。</p>
+
+            <h3 id="section-3-2">3.2 组件拆分与数据流</h3>
+            <table>
+                <thead><tr><th>组件文件</th><th>对应区域</th><th>职责</th><th>是否复用</th></tr></thead>
+                <tbody>
+                    <tr><td><code>views/TaskDetail.vue</code></td><td>容器</td><td>加载任务、管理状态、保存逻辑</td><td>否</td></tr>
+                    <tr><td><code>components/task/TaskHeader.vue</code></td><td>头栏</td><td>标题编辑、状态标签、时限预警、关注/送阅、面包屑、归档</td><td>否</td></tr>
+                    <tr><td><code>components/task/ResponsibilityMatrix.vue</code></td><td>责任矩阵</td><td>展示、添加经办人、分派记录</td><td>否</td></tr>
+                    <tr><td><code>components/task/StageFlow.vue</code></td><td>环节流程</td><td>环节导航、操作按钮、资源引用、附件上传、流程自定义入口、状态自动流转</td><td>否</td></tr>
+                    <tr><td><code>components/task/SubtaskSection.vue</code></td><td>子任务区域</td><td>子任务列表、创建子任务（复用 SubtaskPreAllocator）、关联已有、进度汇总</td><td>复用 SubtaskPreAllocator</td></tr>
+                    <tr><td><code>components/task/ActivityFeed.vue</code></td><td>动态与批示区</td><td>时间线、反馈输入、批示输入、确认反馈</td><td>否</td></tr>
+                    <tr><td><code>components/task/DataSheet.vue</code></td><td>数据明细区</td><td>动态表格、行增删改、父子汇总、快照查看</td><td>否</td></tr>
+                    <tr><td><code>components/task/ExtractionConfigPanel.vue</code></td><td>提取配置面板</td><td>模态框内配置提取规则</td><td>否</td></tr>
+                    <tr><td><code>components/common/PersonSelector.vue</code></td><td>人员选择器</td><td>分派、送阅、子任务负责人选择</td><td>是</td></tr>
+                    <tr><td><code>components/common/FilePicker.vue</code></td><td>文件选择器</td><td>选择模板或制度文件，显示有效期</td><td>是</td></tr>
+                    <tr><td><code>components/task/SubtaskPreAllocator.vue</code></td><td>子任务预分配表单（来自新建任务页）</td><td>动态表单行，创建子任务</td><td>核心复用</td></tr>
+                </tbody>
+            </table>
+
+            <h3 id="section-3-3">3.3 区域一：任务头栏</h3>
+            <ul>
+                <li><strong>标题编辑</strong>：仅 <code>createdBy</code> 可编辑，点击 <code>&lt;h2&gt;</code> 变为 <code>&lt;input&gt;</code>，失焦或回车保存。</li>
+                <li><strong>类型标签</strong>：显示二级类型名称，点击可查看默认流程和明细配置（只读模态）。</li>
+                <li><strong>状态显示</strong>：映射 <code>status</code> 为中文（待处理/进行中/已完成/已归档），带颜色标签。</li>
+                <li><strong>时限与预警</strong>：根据 <code>deadline</code> 计算逾/临期/正常，显示红/黄/绿标签和指示灯。</li>
+                <li><strong>关注星标</strong>：<code>starredBy</code> 数组包含当前 <code>peerId</code> 则高亮，点击切换。</li>
+                <li><strong>送阅</strong>：按钮 → <code>PersonSelector</code> 多选 → 合并到 <code>sharedWith</code> 并保存。</li>
+                <li><strong>面包屑</strong>：若有父任务，显示"← 所属父任务：{标题}"，点击跳转。</li>
+                <li><strong>归档按钮</strong>（新增）：仅 <code>createdBy</code> 且 <code>status === 'completed'</code> 时显示，点击二次确认后 <code>status='archived'</code>，记录动态。</li>
+            </ul>
+
+            <h3 id="section-3-4">3.4 区域二：责任矩阵</h3>
+            <ul>
+                <li>以卡片列表展示主办/协办信息，显示部门、人员（或"待分派"）、角色标签、反馈状态（<code>pending</code>/<code>submitted</code>/<code>confirmed</code> 对应灰/黄/绿）。</li>
+                <li><strong>逐级分派</strong>：仅当前用户为该部门负责人且条目无人员时，显示"添加经办人"，弹出 <code>PersonSelector</code>，更新 <code>responsibleMatrix</code> 并扩展 <code>authorizedPeers</code>，自动生成动态记录。</li>
+                <li><strong>分派反馈</strong>：责任条目本人可点击"反馈"，提交文本+附件，更新 <code>feedbackStatus</code> 为 <code>submitted</code>，插入 <code>type='responsibility_feedback'</code> 动态。</li>
+            </ul>
+
+            <h3 id="section-3-5">3.5 区域三：环节流程</h3>
+            <ul>
+                <li><strong>环节导航条</strong>：基于 <code>stagesSnapshot</code> 渲染步骤条，<code>currentStageIndex</code> 之前绿色打勾，当前高亮。</li>
+                <li><strong>选项卡按钮</strong>：根据当前环节 <code>options</code> 数组生成操作按钮。点击按钮触发 <code>progressStage(nextStageIndex, optionLabel)</code>：
+                    <ul>
+                        <li><strong>状态自动流转</strong>（新增逻辑）：若推进前 <code>status === 'pending'</code>，自动更新为 <code>'in_progress'</code>。若 <code>nextStageIndex >= stagesSnapshot.length</code>，将 <code>status</code> 设为 <code>'completed'</code>，记录完成时间。</li>
+                        <li>在动态区插入流转记录（<code>type='stage_progress'</code>）。</li>
+                    </ul>
+                </li>
+                <li><strong>环节约束</strong>：若 <code>requireSupervisorConfirm</code> 为 true，推进时生成待确认记录，上级确认后才真正推进。</li>
+                <li><strong>资源引用</strong>：模板文件下载、制度文件查看（内嵌 PDF 预览，跳转条款页码）、外部链接跳转。</li>
+                <li><strong>附件上传</strong>：上传后写入 <code>files</code> 表，动态区生成附件记录。</li>
+                <li><strong>流程配置入口</strong>：任务负责人可见，可选取模板替换当前快照或手动编辑环节，可"保存为常设流程"。</li>
+            </ul>
+
+            <h3 id="section-3-6">3.6 区域四：子任务区域</h3>
+            <ul>
+                <li><strong>子任务列表</strong>：通过 <code>task_relations</code> 表查询子任务，显示标题、负责人、状态、时限预警、进度。</li>
+                <li><strong>创建子任务</strong>：复用 <code>SubtaskPreAllocator</code> 组件（模态框），支持动态添加子任务草稿，可继承父任务流程/明细。确认后创建并建立关系。</li>
+                <li><strong>关联已有任务</strong>：搜索选择已有任务，选择汇总模式，创建 <code>task_relations</code> 记录。</li>
+                <li><strong>子任务进度自动汇总</strong>：监听子任务状态变化，在父任务动态区插入汇总记录。</li>
+                <li><strong>子任务相互可见</strong>：通过 <code>authorizedPeers</code> 合并实现。</li>
+            </ul>
+
+            <h3 id="section-3-7">3.7 区域五：动态与批示区</h3>
+            <ul>
+                <li><strong>数据模型</strong>：<code>activityLog</code> 数组，每条含 <code>id</code>、<code>type</code>、<code>content</code>、<code>timestamp</code>、<code>actorPeerId</code>、<code>metadata</code>。</li>
+                <li><strong>时间线渲染</strong>：按时间倒序，不同类型不同图标和样式。</li>
+                <li><strong>进展反馈输入</strong>：底部固定区域，文本+附件上传，提交后追加 <code>type='feedback'</code> 记录。</li>
+                <li><strong>领导批示</strong>：关领导可见专用输入框，提交后追加 <code>type='leader_comment'</code> 记录。<strong>不再使用 <code>hasLeaderComment</code> 字段</strong>，首页批示置顶区直接扫描 <code>activityLog</code>。</li>
+                <li><strong>负责人确认反馈</strong>：当有需要确认的条目时，显示"确认"按钮，更新 <code>confirmedFeedback</code> 并插入系统记录。</li>
+            </ul>
+
+            <h3 id="section-3-8">3.8 区域六：数据明细区</h3>
+            <ul>
+                <li>根据 <code>dataSheetFields</code> 快照构建表格，从 <code>system_fields</code> 获取字段信息。</li>
+                <li>新增行：末尾添加可编辑行，提交后生成 <code>rowId</code>，记录 <code>creatorId</code>。</li>
+                <li>编辑行：仅创建人可编辑。删除行：仅创建人可删，二次确认。</li>
+                <li>父子同构汇总：若 <code>childAggregationMode === 'homogeneous'</code>，自动汇总所有同构子任务数据行。</li>
+                <li>异构汇总：根据 <code>aggregationRules</code> 渲染汇总卡片，点击可穿透查看子任务明细。</li>
+                <li>快照查看：展示只读数据卡片，标注来源任务和时间。</li>
+            </ul>
+
+            <h3 id="section-3-9">3.9 提取配置面板</h3>
+            <p>模态框：执行人、URL、映射配置、提取模式。保存时更新 <code>tasks.extractionConfig</code>，P2P 同步。</p>
+
+            <h3 id="section-3-10">3.10 数据持久化与权限</h3>
+            <ul>
+                <li>所有修改通过 <code>saveTask()</code> 调用 Dexie 的 <code>put</code> 操作。</li>
+                <li>访问权限：若 <code>authorizedPeers</code> 和 <code>sharedWith</code> 均不包含当前用户，重定向首页并提示无权访问。</li>
+                <li>操作权限：编辑标题（创建人）、分派（部门负责人）、反馈（责任人）、流程自定义（任务负责人）、删除任务（创建人，可在头栏提供删除按钮）。</li>
+            </ul>
+
+            <hr>
+
+            <!-- ==================== 4. 我的任务列表页 ==================== -->
+            <h2 id="section-4">4. 我的任务列表页（ <code>/task/my</code> ）</h2>
+
+            <h3 id="section-4-1">4.1 页面概述</h3>
+            <p>统一查看与自己相关任务的集中入口。提供标签页快速筛选、搜索、高级筛选、批量送阅和归档。点击任务跳转详情页。</p>
+
+            <h3 id="section-4-2">4.2 组件拆分</h3>
+            <table>
+                <thead><tr><th>组件</th><th>作用</th></tr></thead>
+                <tbody>
+                    <tr><td><code>views/MyTasks.vue</code></td><td>容器</td></tr>
+                    <tr><td><code>components/task/MyTaskFilters.vue</code></td><td>标签页、搜索框、高级筛选入口</td></tr>
+                    <tr><td><code>components/task/TaskListView.vue</code></td><td>增强任务列表，支持复选框、预警、批量操作</td></tr>
+                    <tr><td><code>components/common/AdvancedFilterModal.vue</code></td><td>高级筛选弹窗</td></tr>
+                    <tr><td><code>components/common/PersonSelector.vue</code></td><td>批量送阅人员选择</td></tr>
+                </tbody>
+            </table>
+
+            <h3 id="section-4-3">4.3 功能点</h3>
+            <h4>4.3.1 标签页快速筛选</h4>
+            <table>
+                <thead><tr><th>标签页</th><th>筛选条件</th></tr></thead>
+                <tbody>
+                    <tr><td>全部任务</td><td><code>authorizedPeers</code> 或 <code>sharedWith</code> 包含当前用户</td></tr>
+                    <tr><td>待办任务</td><td>责任人为本人的进行中任务</td></tr>
+                    <tr><td>我发起的</td><td><code>createdBy === currentPeerId</code></td></tr>
+                    <tr><td>关注任务</td><td><code>starredBy</code> 包含当前用户</td></tr>
+                    <tr><td>送阅任务</td><td><code>sharedWith</code> 包含当前用户</td></tr>
+                    <tr><td>我协办的</td><td>协办责任人为本人的任务</td></tr>
+                </tbody>
+            </table>
+            <h4>4.3.2~4.3.6 其余功能</h4>
+            <p>包括搜索与筛选（防抖300ms）、任务列表展示（复选框、预警灯、责任角色标签等）、批量送阅、批量归档（新增：仅已完成任务且用户为创建人时可用）、实时更新（监听P2P事件）等。</p>
+
+            <h3 id="section-4-4">4.4 交互细节</h3>
+            <ul>
+                <li>加载状态：骨架屏。空状态：不同标签页显示不同提示。</li>
+                <li>搜索无结果："未找到匹配的任务"。</li>
+                <li>详情页跳转返回时保持筛选条件（<code>keep-alive</code> 或路由元信息控制）。</li>
+                <li>性能：使用 Dexie 索引，防抖，虚拟滚动（数据量大时）。</li>
+            </ul>
+
+            <hr>
+
+            <!-- ==================== 5. 督办看板页 ==================== -->
+            <h2 id="section-5">5. 督办看板页（ <code>/inspector</code> ）</h2>
+
+            <h3 id="section-5-1">5.1 页面概述</h3>
+            <p>面向督办员和关领导的全局任务监控工具。提供多维度组合筛选，列表展示结果，自动汇总关键统计指标，支持导出和一键催办。</p>
+
+            <h3 id="section-5-2">5.2 组件拆分</h3>
+            <table>
+                <thead><tr><th>组件</th><th>作用</th></tr></thead>
+                <tbody>
+                    <tr><td><code>views/InspectorDashboard.vue</code></td><td>容器，左侧筛选 + 中间列表 + 右侧统计</td></tr>
+                    <tr><td><code>components/inspector/FilterPanel.vue</code></td><td>多条件筛选面板</td></tr>
+                    <tr><td><code>components/inspector/TaskResultList.vue</code></td><td>结果列表，特殊列：未办结部门、催办按钮</td></tr>
+                    <tr><td><code>components/inspector/SummaryPanel.vue</code></td><td>统计卡片、导出按钮</td></tr>
+                    <tr><td><code>components/inspector/UrgeModal.vue</code></td><td>催办操作模态框</td></tr>
+                    <tr><td><code>components/common/ExportButton.vue</code></td><td>导出 Excel</td></tr>
+                </tbody>
+            </table>
+
+            <h3 id="section-5-3">5.3 多维度筛选</h3>
+            <p>左侧提供任务类型、来源、主办/协办部门、状态、标签、时限范围、紧急程度、关键词等筛选条件，所有条件 AND 组合，变更后防抖300ms自动刷新列表。</p>
+
+            <h3 id="section-5-4">5.4 结果列表</h3>
+            <p>列：任务标题、主办部门及经办人、协办部门及完成状态、状态+预警、未办结部门（从责任矩阵计算）、当前环节、截止日期、操作按钮（详情、催办）。逾期红色背景，临期黄色。默认按截止日期升序。</p>
+
+            <h3 id="section-5-5">5.5 汇总统计</h3>
+            <p>右侧面板实时计算：任务总数、已办结数、办结率、逾期数、逾期率、平均办理时长。可选分组统计（按部门/任务类型）。</p>
+
+            <h3 id="section-5-6">5.6 导出报表</h3>
+            <p>导出 Excel 包含当前筛选结果列表数据及统计卡片数据，使用 <code>xlsx</code> 库前端生成。</p>
+
+            <h3 id="section-5-7">5.7 催办操作</h3>
+            <p>点击"催办"打开 <code>UrgeModal</code>，可输入留言，默认接收人为未完成反馈的责任人列表。确认后向任务 <code>activityLog</code> 插入 <code>type='urge'</code> 记录，触发 P2P 通知。也可选择创建督办任务。</p>
+
+            <h3 id="section-5-8">5.8 权限控制</h3>
+            <ul>
+                <li>路由守卫：仅角色 <code>inspector</code> 或职位包含"关长/副关长"可访问。</li>
+                <li>数据访问：督办员本地应已通过 P2P 同步机制接收全关任务（同步模块负责）。</li>
+            </ul>
+
+            <hr>
+
+            <!-- ==================== 6-11 配置页 ==================== -->
+            <h2 id="section-6">6. 流程配置页（ <code>/config/flow</code> ）</h2>
+            <h3 id="section-6-1">6.1 页面概述</h3>
+            <p>管理员和科室负责人维护常设流程模板。创建、编辑、删除流程模板，定义环节序列、操作选项及关联资源，设置环节约束。</p>
+            <h3 id="section-6-2">6.2 组件拆分</h3>
+            <table>
+                <thead><tr><th>组件</th><th>作用</th></tr></thead>
+                <tbody>
+                    <tr><td><code>views/FlowConfig.vue</code></td><td>容器</td></tr>
+                    <tr><td><code>components/config/FlowTemplateList.vue</code></td><td>模板列表</td></tr>
+                    <tr><td><code>components/config/FlowTemplateEditor.vue</code></td><td>编辑模态框</td></tr>
+                    <tr><td><code>components/config/StageEditor.vue</code></td><td>单环节编辑器</td></tr>
+                    <tr><td><code>components/config/OptionEditor.vue</code></td><td>单选项编辑器</td></tr>
+                    <tr><td><code>components/common/FilePicker.vue</code></td><td>文件选择器（制度文件显示有效期）</td></tr>
+                </tbody>
+            </table>
+            <h3 id="section-6-3">6.3 功能点</h3>
+            <p><strong>模板列表</strong>：按权限过滤。支持搜索、编辑、删除。<strong>新建/编辑模板</strong>（模态框）：基本信息（名称、可见范围）、环节管理（可排序列表，含选项和约束）、选项配置（标签、下一环节、资源引用）。制度文件选择时 <code>FilePicker</code> 显示有效期，过期文件标红并警告。至少保留2个环节。<strong>保存</strong>：验证后写入 IndexedDB。<strong>删除</strong>：仅管理员，检查进行中任务引用。<strong>从任务保存为模板</strong>：任务详情页调用相同逻辑。</p>
+
+            <h2 id="section-7">7. 明细模板配置页（ <code>/config/datasheet</code> ）</h2>
+            <h3 id="section-7-1">7.1 页面概述</h3>
+            <p>管理员维护明细模板，定义结构化字段组合。</p>
+            <h3 id="section-7-2">7.2 功能点</h3>
+            <p>模板列表展示所有记录。新建/编辑模态框：名称、字段选择（从 <code>system_fields</code> 多选，可设必填和排序）、拖拽排序。删除前检查引用。</p>
+
+            <h2 id="section-8">8. 字段管理页（ <code>/config/fields</code> ）</h2>
+            <h3 id="section-8-1">8.1 页面概述</h3>
+            <p>管理员维护系统字段库。</p>
+            <h3 id="section-8-2">8.2 功能点</h3>
+            <p>字段列表展示。新建/编辑模态框：名称、类型、单位、下拉选项、可聚合开关、建议级别。系统内置字段部分属性不可编辑、不可删除。删除前检查模板引用。</p>
+
+            <h2 id="section-9">9. 态势配置页（ <code>/config/metrics</code> ）</h2>
+            <h3 id="section-9-1">9.1 页面概述</h3>
+            <p>管理员定义首页态势指标。通过灵活的筛选条件和聚合规则从任务数据中提取数值。核心数据表：<code>metric_definitions</code>。</p>
+            <h3 id="section-9-2">9.2 组件拆分</h3>
+            <table>
+                <thead><tr><th>组件</th><th>作用</th></tr></thead>
+                <tbody>
+                    <tr><td><code>views/MetricConfig.vue</code></td><td>容器</td></tr>
+                    <tr><td><code>components/config/MetricList.vue</code></td><td>指标列表</td></tr>
+                    <tr><td><code>components/config/MetricFormModal.vue</code></td><td>编辑模态框，含筛选构建器和聚合规则编辑器</td></tr>
+                    <tr><td><code>components/config/FilterBuilder.vue</code></td><td>筛选条件构建器，支持模式切换</td></tr>
+                    <tr><td><code>components/config/AggregationRuleEditor.vue</code></td><td>聚合规则编辑器</td></tr>
+                </tbody>
+            </table>
+            <h3 id="section-9-3">9.3 指标配置数据模型（修正后）</h3>
+            <pre><code>interface MetricConfig {
+                mode: 'filter' | 'specific';
+                taskTypeIds?: string[];
+                filterTags?: string[];
+                timeRange?: { start: string; end: string };
+                specificTaskIds?: string[];
+                fieldId: string;
+                aggFunc: 'SUM' | 'COUNT' | 'AVG' | 'MAX' | 'MIN';
+            }</code></pre>
+            <h3 id="section-9-4">9.4 筛选模式双选机制</h3>
+            <p>顶部单选切换：<strong>按条件筛选</strong>（任务类型、标签、时间范围）或 <strong>指定具体任务</strong>（多选具体任务）。两种模式互斥，切换时清空另一模式数据。</p>
+            <h3 id="section-9-5">9.5 聚合规则</h3>
+            <p>聚合字段从 <code>system_fields</code> 可聚合字段中选择，或特殊选项"📊 任务计数"。聚合函数根据字段类型动态限制可选范围。</p>
+            <h3 id="section-9-6">9.6 保存与删除</h3>
+            <p>验证后写入 IndexedDB。系统内置指标不可删除。</p>
+            <h3 id="section-9-7">9.7 首页对接</h3>
+            <p>首页聚合计算时根据 <code>mode</code> 采用对应筛选逻辑，然后执行聚合函数。</p>
+
+            <h2 id="section-10">10. 文件管理页（ <code>/config/files</code> ）</h2>
+            <h3 id="section-10-1">10.1 页面概述</h3>
+            <p>集中管理模板、制度和附件文件。支持分类浏览、上传、下载、预览、版本管理、条款目录编辑和统一替换。</p>
+            <h3 id="section-10-2">10.2 功能点</h3>
+            <ul>
+                <li>分类浏览（全部/模板/制度/附件）、搜索、上传（制度文件需填写文号、有效期、条款目录）。</li>
+                <li>下载、预览（PDF用pdf.js，Word用mammoth转HTML后生成PDF预览）。</li>
+                <li>版本管理（上传新版本时旧版本 <code>isLatest=false</code>，版本号递增）。</li>
+                <li>统一替换（搜索引用旧版本的任务快照批量更新，二次确认）。</li>
+                <li>条款目录编辑（建议上传PDF以保证页码准确；Word文件给出页码偏差提示）。</li>
+                <li>删除前检查引用。制度文件列表标红过期文件。</li>
+            </ul>
+
+            <h2 id="section-11">11. 类型与标签配置页（ <code>/config/types</code> ）</h2>
+            <h3 id="section-11-1">11.1 页面概述</h3>
+            <p>管理任务类型的一级分类、二级类型及其默认模板绑定，以及标签组和标签。支持 Excel 批量导入导出。</p>
+            <h3 id="section-11-2">11.2 功能点</h3>
+            <ul>
+                <li>一级分类管理：增删改排序，删除前检查二级类型引用。</li>
+                <li>二级类型管理：在一级分类下增删改排序，可设置默认流程模板和明细模板。</li>
+                <li>标签组管理：增删改排序，删除前检查标签存在。</li>
+                <li>标签管理：在标签组下增删改排序。</li>
+                <li>Excel 导入导出。</li>
+            </ul>
+
+            <hr>
+
+            <!-- ==================== 附录 ==================== -->
+            <h2 id="appendix">附录：关键调整与角色验证摘要</h2>
+
+            <h3>状态流转规则（已整合至任务详情页）</h3>
+            <ul>
+                <li>任务创建后 <code>status='pending'</code>。</li>
+                <li>首次环节推进时自动变为 <code>'in_progress'</code>。</li>
+                <li>推进到环节末尾自动变为 <code>'completed'</code>。</li>
+                <li>创建人在已完成时可手动归档（<code>status='archived'</code>），支持批量归档。</li>
+            </ul>
+
+            <h3>领导批示数据获取（已整合至首页看板）</h3>
+            <p>首页批示置顶区直接从 <code>tasks.activityLog</code> 中扫描近 7 天的 <code>type='leader_comment'</code> 记录，不再依赖 <code>hasLeaderComment</code> 字段。</p>
+
+            <h3>用户自定义指标存储（已整合至首页看板和态势配置）</h3>
+            <p><code>user_dashboard_config</code> 结构强制包含 <code>customsMetrics</code> 和 <code>sectionMetrics</code> 两个独立数组。</p>
+
+            <h3>文件选择器增强（已整合至流程配置和文件管理）</h3>
+            <p>选择制度文件时显示文号、有效期，过期文件标红，允许引用但给出警告；条款页码建议使用 PDF。</p>
+
+            <h3>全角色流程验证（连贯性确认）</h3>
+            <p>通过模拟关长、科长、督办员、普通干部的全流程操作，各页面交互、数据流转均无断点，符合业务闭环。开发组可按本规格书实施。</p>
+
+            <hr>
+            <p style="text-align:center;color:#9ca3af;font-size:0.85rem;margin-top:32px;">— 全系统页面开发规格书（终版）· 完 —</p>
+
+        </div><!-- /.content-wrapper -->
+    </main>
+
+    <!-- ==================== 目录高亮脚本 ==================== -->
+    <script>
+        (function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar-nav a');
+            const sections = [];
+            sidebarLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href.startsWith('#')) {
+                    const target = document.querySelector(href);
+                    if (target) {
+                        sections.push({ link, target });
+                    }
+                }
+            });
+
+            function updateActiveLink() {
+                let currentId = null;
+                const scrollTop = window.scrollY + 80;
+                for (let i = sections.length - 1; i >= 0; i--) {
+                    if (sections[i].target.offsetTop <= scrollTop) {
+                        currentId = sections[i].link.getAttribute('href');
+                        break;
+                    }
+                }
+                sidebarLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === currentId) {
+                        link.classList.add('active');
+                        // 确保侧边栏中活动链接可见
+                        link.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', updateActiveLink, { passive: true });
+            window.addEventListener('load', updateActiveLink);
+            // 点击链接后短暂延迟更新
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    setTimeout(updateActiveLink, 400);
+                });
+            });
+            updateActiveLink();
+        })();
+    </script>
+</body>
+</html>
