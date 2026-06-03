@@ -33,8 +33,8 @@ const router = createRouter({
     { path: '/admin/personnel', component: () => import('@/views/Admin/PersonnelManage.vue') },
     { path: '/admin/departments', component: () => import('@/views/Admin/DeptManage.vue') },
     { path: '/admin/roles', component: () => import('@/views/Admin/RoleManage.vue') },
-    { path: '/admin/settings', component: () => import('@/views/Admin/SystemSettings.vue') },
-    { path: '/admin/signaling', component: () => import('@/views/Admin/SignalingSettings.vue') },
+    { path: '/admin/settings', component: () => import('@/views/Admin/Settings.vue') },
+    { path: '/admin/signaling', redirect: '/admin/settings' },
 
     // 兼容旧路由
     { path: '/dashboard', redirect: '/home' },

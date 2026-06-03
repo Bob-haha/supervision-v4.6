@@ -216,6 +216,12 @@ const menuGroups = computed(() => {
         { path: '/stats/guanqu', label: '关区数据看板', icon: 'TrendCharts' },
       ],
     },
+    {
+      title: '系统设置',
+      items: [
+        { path: '/admin/settings', label: '系统设置', icon: 'Setting' },
+      ],
+    },
   ]
 
   if (isAdmin) {
@@ -237,8 +243,6 @@ const menuGroups = computed(() => {
         { path: '/admin/personnel', label: '人员管理', icon: 'User' },
         { path: '/admin/departments', label: '部门管理', icon: 'OfficeBuilding' },
         { path: '/admin/roles', label: '角色权限', icon: 'Lock' },
-        { path: '/admin/signaling', label: '信令服务器', icon: 'Connection' },
-        { path: '/admin/settings', label: '系统设置', icon: 'Setting' },
       ],
     })
   }

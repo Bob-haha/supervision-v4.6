@@ -28,7 +28,7 @@
           v-if="(currentStage.options || []).length === 0"
           size="small"
           type="success"
-          @click="doProgress(stages.length, '完成')"
+          @click="doProgress(currentIdx + 1, isLastStage ? '完成任务' : '推进到下一环节')"
         >
           {{ isLastStage ? '✅ 完成任务' : '▶ 推进到下一环节' }}
         </el-button>
